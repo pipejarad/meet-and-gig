@@ -20,7 +20,7 @@ pytz==2021.1
 # Configuración
 django-environ==0.11.2
 toml==0.10.2
-typing_extensions==4.13.2
+typing_extensions==4.15.0
 
 # Producción (Railway) — Bloques 2-5 del ROADMAP
 psycopg[binary]==3.2.9
