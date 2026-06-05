@@ -402,16 +402,18 @@
                         </div>
                         {% endif %}
                         
+                        {% comment %}DIFERIDO v1 (pivote a vitrina): invitaciones de empleador
                         <!-- Botón de invitar para empleadores -->
                         {% if user.is_authenticated and user.tipo_usuario == 'empleador' and not es_propietario %}
                         <div class="mt-2">
-                            <a href="{% url 'enviar_invitacion' portafolio_slug=portafolio.slug %}" 
+                            <a href="{% url 'enviar_invitacion' portafolio_slug=portafolio.slug %}"
                                class="btn btn-primary btn-sm">
                                 <i class="fas fa-envelope me-1"></i>
                                 Enviar Invitación
                             </a>
                         </div>
                         {% endif %}
+                        {% endcomment %}
                     </div>
                 </div>
             </div>
@@ -496,6 +498,7 @@
                 </div>
             </div>
 
+            {% comment %}DIFERIDO v1 (pivote a vitrina): referencias laborales
             <!-- Referencias y Testimonios -->
             {% with referencias_visibles=portafolio.testimonios.all|dictsort:"fecha_publicacion" %}
                 {% if referencias_visibles %}
@@ -554,6 +557,7 @@
                 </div>
                 {% endif %}
             {% endwith %}
+            {% endcomment %}
 
             <!-- Video Demo -->
             {% if portafolio.video_demo %}
@@ -646,6 +650,7 @@
 
             <!-- Información de Contacto -->
             {% if user.is_authenticated and user.tipo_usuario == 'empleador' and not es_propietario %}
+                {% comment %}DIFERIDO v1 (pivote a vitrina): contacto directo para empleadores
                 <!-- Para empleadores: siempre mostrar contacto disponible -->
                 {% if portafolio.usuario.email or portafolio.usuario.telefono %}
                 <div class="card info-card">
@@ -684,6 +689,7 @@
                     </div>
                 </div>
                 {% endif %}
+                {% endcomment %}
             {% else %}
                 <!-- Para público general: solo mostrar si está habilitado -->
                 {% if portafolio.show_email or portafolio.show_telefono %}
@@ -710,15 +716,17 @@
                         </div>
                         {% endif %}
                         
+                        {% comment %}DIFERIDO v1 (pivote a vitrina): registro de empleador
                         {% if not user.is_authenticated %}
                         <div class="alert alert-success mt-3 mb-0">
                             <small>
                                 <i class="fas fa-user-plus me-1"></i>
-                                <a href="{% url 'registro' %}" class="alert-link">Regístrate como empleador</a> 
+                                <a href="{% url 'registro' %}" class="alert-link">Regístrate como empleador</a>
                                 para más opciones de contacto
                             </small>
                         </div>
                         {% endif %}
+                        {% endcomment %}
                     </div>
                 </div>
                 {% endif %}
@@ -732,6 +740,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-2">
+                        {% comment %}DIFERIDO v1 (pivote a vitrina): referencias laborales
                         <div class="col-md-6">
                             <a href="{% url 'gestionar_referencias' %}" class="btn btn-outline-primary btn-sm w-100">
                                 <i class="fas fa-star me-1"></i>Gestionar Referencias
@@ -742,16 +751,19 @@
                                 <i class="fas fa-plus me-1"></i>Solicitar Referencia
                             </a>
                         </div>
+                        {% endcomment %}
                         <div class="col-md-6">
                             <a href="{% url 'editar_portafolio_musico' %}" class="btn btn-outline-secondary btn-sm w-100">
                                 <i class="fas fa-edit me-1"></i>Editar Portafolio
                             </a>
                         </div>
+                        {% comment %}DIFERIDO v1 (pivote a vitrina): referencias laborales
                         <div class="col-md-6">
                             <a href="{% url 'agregar_testimonio_directo' %}" class="btn btn-outline-info btn-sm w-100">
                                 <i class="fas fa-comment me-1"></i>Agregar Testimonio
                             </a>
                         </div>
+                        {% endcomment %}
                     </div>
                 </div>
             </div>
@@ -794,6 +806,7 @@
     </div>
 </div>
 
+{% comment %}DIFERIDO v1 (pivote a vitrina): referencias laborales (modales)
 <!-- Modales de referencias -->
 {% with referencias_visibles=portafolio.testimonios.all|dictsort:"fecha_publicacion" %}
     {% for testimonio in referencias_visibles %}
@@ -882,6 +895,7 @@
         {% endif %}
     {% endfor %}
 {% endwith %}
+{% endcomment %}
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

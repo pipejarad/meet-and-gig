@@ -42,7 +42,7 @@
 {% if not user.is_authenticated %}
 <section class="py-5 bg-light">
   <div class="container">
-    <div class="row">
+    <div class="row justify-content-center">
       <div class="col-lg-6 mb-4">
         <div class="card bg-brand text-white h-100 border-0">
           <div class="card-body text-center p-5 d-flex flex-column">
@@ -60,13 +60,14 @@
           </div>
         </div>
       </div>
+      {% comment %}DIFERIDO v1 (pivote a vitrina): CTA de empleador
       <div class="col-lg-6 mb-4">
         <div class="card bg-accent-teal text-white h-100 border-0">
           <div class="card-body text-center p-5 d-flex flex-column">
             <i class="fas fa-briefcase fa-4x mb-4"></i>
             <h3 class="h2 mb-3">¿Organizas Eventos?</h3>
             <p class="fs-5 flex-grow-1 mb-4">
-              Encuentra músicos profesionales para tu evento. Publica ofertas 
+              Encuentra músicos profesionales para tu evento. Publica ofertas
               y conecta con el talento perfecto para tu ocasión especial.
             </p>
             <div class="mt-auto">
@@ -77,6 +78,7 @@
           </div>
         </div>
       </div>
+      {% endcomment %}
     </div>
   </div>
 </section>
@@ -172,7 +174,8 @@
 <!-- Acceso Rápido -->
 <section class="py-4 bg-surface-50">
   <div class="container">
-    <div class="row">
+    <div class="row justify-content-center">
+      {% comment %}DIFERIDO v1 (pivote a vitrina): ofertas laborales
       <div class="col-md-6 mb-3">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body text-center p-4">
@@ -185,6 +188,7 @@
           </div>
         </div>
       </div>
+      {% endcomment %}
       <div class="col-md-6 mb-3">
         <div class="card border-0 shadow-sm h-100">
           <div class="card-body text-center p-4">
@@ -204,7 +208,7 @@
 <!-- Estadísticas -->
 <section class="py-5 bg-surface-100">
   <div class="container">
-    <div class="row text-center">
+    <div class="row text-center justify-content-center">
       <div class="col-lg-3 col-sm-6 mb-4">
         <div class="stat-item">
           <h2 class="display-3 fw-bold text-brand mb-2">{{ stats.total_musicos }}</h2>
@@ -217,6 +221,7 @@
           <p class="fs-5 mb-0">Portafolios Activos</p>
         </div>
       </div>
+      {% comment %}DIFERIDO v1 (pivote a vitrina): stats de ofertas y empleadores
       <div class="col-lg-3 col-sm-6 mb-4">
         <div class="stat-item">
           <h2 class="display-3 fw-bold text-brand mb-2">{{ stats.total_ofertas }}</h2>
@@ -229,6 +234,7 @@
           <p class="fs-5 mb-0">Empleadores Activos</p>
         </div>
       </div>
+      {% endcomment %}
     </div>
   </div>
 </section>

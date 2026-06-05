@@ -228,6 +228,7 @@
                                 <i class="fas fa-home mr-1" aria-hidden="true"></i>Inicio
                             </a>
                         </li>
+                        {% comment %}DIFERIDO v1 (pivote a vitrina): ofertas laborales
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'buscar_ofertas' %}">
                                 <i class="fas fa-briefcase mr-1" aria-hidden="true"></i>
@@ -235,6 +236,7 @@
                                 <span class="d-none d-lg-inline"> de Trabajo</span>
                             </a>
                         </li>
+                        {% endcomment %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'buscar_portafolios' %}">
                                 <i class="fas fa-users mr-1" aria-hidden="true"></i>Músicos
@@ -247,6 +249,7 @@
                                     <i class="fas fa-music mr-1" aria-hidden="true"></i>Mi Portafolio
                                 </a>
                             </li>
+                            {% comment %}DIFERIDO v1 (pivote a vitrina): postulaciones, invitaciones y navegación de empleador
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'mis_postulaciones' %}">
                                     <i class="fas fa-list-alt mr-1" aria-hidden="true"></i>Mis Postulaciones
@@ -268,6 +271,7 @@
                                     <i class="fas fa-bell mr-1" aria-hidden="true"></i>Notificaciones
                                 </a>
                             </li>
+                            {% endcomment %}
                             {% endif %}
                         {% endif %}
                     </ul>
@@ -289,6 +293,7 @@
                                     <a class="dropdown-item" href="{% url 'ver_mi_portafolio' %}">
                                         <i class="fas fa-music mr-2" aria-hidden="true"></i>Mi Portafolio Profesional
                                     </a>
+                                    {% comment %}DIFERIDO v1 (pivote a vitrina): postulaciones e invitaciones
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="{% url 'mis_postulaciones' %}">
                                         <i class="fas fa-list-alt mr-2" aria-hidden="true"></i>Mis Postulaciones
@@ -296,6 +301,7 @@
                                     <a class="dropdown-item" href="{% url 'mis_invitaciones_recibidas' %}">
                                         <i class="fas fa-envelope mr-2" aria-hidden="true"></i>Invitaciones Recibidas
                                     </a>
+                                    {% endcomment %}
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="{% url 'editar_perfil_musico' %}">
                                         <i class="fas fa-edit mr-2" aria-hidden="true"></i>Editar Perfil
@@ -303,6 +309,7 @@
                                     <a class="dropdown-item" href="{% url 'editar_portafolio_musico' %}">
                                         <i class="fas fa-cog mr-2" aria-hidden="true"></i>Editar Portafolio
                                     </a>
+                                {% comment %}DIFERIDO v1 (pivote a vitrina): menú de empleador
                                 {% elif user.tipo_usuario == 'empleador' %}
                                     <a class="dropdown-item" href="{% url 'perfil_empleador' %}">
                                         <i class="fas fa-user mr-2" aria-hidden="true"></i>Mi Perfil
@@ -325,6 +332,7 @@
                                     <a class="dropdown-item" href="{% url 'editar_perfil_empleador' %}">
                                         <i class="fas fa-edit mr-2" aria-hidden="true"></i>Editar Perfil
                                     </a>
+                                {% endcomment %}
                                 {% else %}
                                     <a class="dropdown-item" href="#">
                                         <i class="fas fa-user mr-2" aria-hidden="true"></i>Mi Perfil

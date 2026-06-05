@@ -47,8 +47,12 @@ class RegistroForm(UserCreationForm):
         }
     )
     
+    # DIFERIDO v1 (pivote a vitrina): el selector no se renderiza en el template y
+    # save() fuerza 'musico'. Para reactivar empleadores: required=True, quitar el
+    # forzado en save() y restaurar el campo en registro.html.
     tipo_usuario = forms.ChoiceField(
         choices=Usuario.TIPO_CHOICES,
+        required=False,
         widget=forms.Select(attrs={
             'class': 'form-select'
         }),
@@ -116,6 +120,7 @@ class RegistroForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email'].lower()
+        user.tipo_usuario = 'musico'  # DIFERIDO v1: solo se registran músicos
         if commit:
             user.save()
         return user
