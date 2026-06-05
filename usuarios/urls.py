@@ -21,6 +21,11 @@ urlpatterns = [
     path('portafolio/musico/', views.ver_mi_portafolio, name='ver_mi_portafolio'),
     path('portafolio/musico/crear/', views.editar_portafolio_musico, name='crear_portafolio_musico'),
     path('portafolio/musico/editar/', views.editar_portafolio_musico, name='editar_portafolio_musico'),
+
+    # Asistente de IA de biografías (v1.5 — ROADMAP §8).
+    # OJO: deben ir ANTES de portafolio/<slug>/ o el slug las capturaría.
+    path('portafolio/asistente-bio/', views.asistente_bio_view, name='asistente_bio'),
+    path('portafolio/asistente-bio/usar/<int:indice>/', views.usar_bio_variante_view, name='usar_bio_variante'),
     
     # URL unificada del portafolio (público + privado)
     path('portafolio/<slug:slug>/', views.PortafolioUnificadoView.as_view(), name='ver_portafolio'),

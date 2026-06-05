@@ -23,9 +23,10 @@ from .forms import (
     RegistroForm, LoginForm, RecuperarPasswordForm, CambiarPasswordForm,
     PerfilMusicoForm, PerfilEmpleadorForm, PortafolioForm, CrearOfertaLaboralForm,
     PostulacionForm, SolicitudReferenciaForm, ResponderReferenciaForm, TestimonioDirectoForm,
-    ContactoMusicoForm
+    ContactoMusicoForm, AsistenteBioForm
 )
-from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLaboral, Postulacion, Notificacion, Invitacion, Testimonio, ContactoMusico
+from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLaboral, Postulacion, Notificacion, Invitacion, Testimonio, ContactoMusico, GeneracionBioIA
+from .services import bio_ia
 
 
 def inicio(request):
@@ -490,8 +491,20 @@ def editar_portafolio_musico(request):
             messages.success(request, mensaje)
             return redirect('ver_mi_portafolio')
     else:
-        form = PortafolioForm(instance=portafolio)
-    
+        # Borrador del asistente de IA (si el músico eligió una variante):
+        # se carga como valor inicial para que lo edite y apruebe — la IA
+        # nunca publica sola.
+        borrador_bio = request.session.pop('bio_borrador', None)
+        form = PortafolioForm(
+            instance=portafolio,
+            initial={'biografia': borrador_bio} if borrador_bio else None,
+        )
+        if borrador_bio:
+            messages.info(
+                request,
+                'Borrador cargado en "Biografía". Revísalo, edítalo a tu gusto y guarda.'
+            )
+
     titulo = 'Crear Mi Portafolio Musical' if es_creacion else 'Editar Mi Portafolio Musical'
     
     context = {
@@ -2405,3 +2418,90 @@ def marcar_contacto_view(request, contacto_id, nuevo_estado):
     else:
         messages.success(request, 'Contacto marcado como respondido.')
     return redirect('mis_contactos')
+
+
+# ============================================================================
+# ASISTENTE DE IA DEL PORTAFOLIO (v1.5 — ROADMAP §8)
+# ============================================================================
+
+LIMITE_GENERACIONES_BIO_DIA = 5
+
+
+def _generaciones_bio_hoy(usuario):
+    return GeneracionBioIA.objects.filter(
+        usuario=usuario, creado__date=timezone.localdate()
+    ).count()
+
+
+@login_required
+def asistente_bio_view(request):
+    """Formulario estructurado → 2 borradores de biografía con IA.
+
+    Human-in-the-loop: el músico elige una variante, la edita en el
+    formulario del portafolio y la guarda él mismo. Nunca se autopublica.
+    """
+    if request.user.tipo_usuario != 'musico':
+        messages.error(request, 'Solo los músicos pueden usar el asistente.')
+        return redirect('inicio')
+
+    restantes = LIMITE_GENERACIONES_BIO_DIA - _generaciones_bio_hoy(request.user)
+    variantes = request.session.get('bio_variantes')
+
+    if request.method == 'POST':
+        form = AsistenteBioForm(request.POST)
+        if form.is_valid():
+            if restantes <= 0:
+                messages.error(
+                    request,
+                    'Alcanzaste el límite diario de generaciones. '
+                    'Vuelve mañana o edita tu biografía a mano.'
+                )
+            else:
+                try:
+                    variantes = bio_ia.generar_bio(form.cleaned_data)
+                    GeneracionBioIA.objects.create(usuario=request.user)
+                    request.session['bio_variantes'] = variantes
+                    restantes -= 1
+                except bio_ia.BioIAError as e:
+                    messages.error(request, str(e))
+    else:
+        # Prefill con lo que el portafolio ya sabe (Modo 1.5 "casi gratis":
+        # menos tipeo y menos espacio para inconsistencias)
+        initial = {}
+        portafolio = getattr(request.user, 'portafolio', None)
+        initial['nombre'] = request.user.get_full_name() or request.user.username
+        if portafolio:
+            generos = [pg.genero.nombre for pg in portafolio.get_generos()]
+            instrumentos = [pi.instrumento.nombre
+                            for pi in portafolio.get_instrumentos_principales()]
+            if generos:
+                initial['generos'] = ', '.join(generos)
+            if instrumentos:
+                initial['formato'] = ', '.join(instrumentos)
+            if portafolio.años_experiencia:
+                initial['experiencia'] = f'{portafolio.años_experiencia} años'
+        form = AsistenteBioForm(initial=initial)
+
+    context = {
+        'form': form,
+        'variantes': variantes,
+        'restantes': max(restantes, 0),
+        'limite': LIMITE_GENERACIONES_BIO_DIA,
+        'asistente_disponible': bool(settings.ANTHROPIC_API_KEY),
+    }
+    return render(request, 'usuarios/asistente_bio.html', context)
+
+
+@login_required
+def usar_bio_variante_view(request, indice):
+    """El músico eligió una variante: va al editor del portafolio como borrador."""
+    if request.method != 'POST':
+        return redirect('asistente_bio')
+
+    variantes = request.session.get('bio_variantes') or []
+    if not (0 <= indice < len(variantes)):
+        messages.error(request, 'Esa variante ya no está disponible. Genera de nuevo.')
+        return redirect('asistente_bio')
+
+    request.session['bio_borrador'] = variantes[indice]
+    return redirect('editar_portafolio_musico')

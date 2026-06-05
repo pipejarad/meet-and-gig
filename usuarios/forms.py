@@ -1114,3 +1114,38 @@ class ContactoMusicoForm(forms.ModelForm):
     def es_spam(self):
         """True si el honeypot vino con contenido (solo válido tras is_valid())."""
         return bool(self.cleaned_data.get('sitio_web'))
+
+
+class AsistenteBioForm(forms.Form):
+    """Formulario estructurado del asistente de IA (ROADMAP §8).
+
+    Preguntas predefinidas, no chat libre: calidad consistente y sin espacio
+    para que el modelo invente datos.
+    """
+
+    nombre = forms.CharField(
+        label='Nombre artístico', max_length=120,
+        widget=forms.TextInput(attrs={'class': 'form-control'}))
+    generos = forms.CharField(
+        label='Géneros musicales', max_length=200, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control',
+                                      'placeholder': 'Ej: rock latino, funk, balada'}))
+    formato = forms.CharField(
+        label='Formato e instrumentos', max_length=200, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control',
+                                      'placeholder': 'Ej: solista con guitarra y loop station'}))
+    experiencia = forms.CharField(
+        label='Años de experiencia', max_length=60, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 8 años'}))
+    destacados = forms.CharField(
+        label='Presentaciones o logros destacados', required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2,
+                                     'placeholder': 'Ej: residencia los viernes en Bar X, telonero de Y en 2024'}))
+    eventos = forms.CharField(
+        label='Disponible para', max_length=200, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control',
+                                      'placeholder': 'Ej: matrimonios, bares, eventos de empresa'}))
+    unico = forms.CharField(
+        label='¿Qué te hace único?', required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2,
+                                     'placeholder': 'Ej: repertorio a pedido del público, set 100% en vivo sin pistas'}))

@@ -116,3 +116,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'inicio'
 LOGOUT_REDIRECT_URL = 'login'
+
+# --------------------------------------------------------------------------
+# Asistente de IA del portafolio (ROADMAP §8)
+# Sin API key, el asistente se desactiva con un mensaje amable (no rompe nada).
+# --------------------------------------------------------------------------
+ANTHROPIC_API_KEY = env('ANTHROPIC_API_KEY', default='')
+BIO_IA_MODELO = env('BIO_IA_MODELO', default='claude-haiku-4-5')

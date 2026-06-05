@@ -78,17 +78,21 @@ Principios vigentes — no romperlos al evolucionar la feature:
 
 ---
 
-## Diseño nuevo a construir (aún NO está en el código)
+## Asistente de IA del portafolio (construido) — reglas que deben mantenerse
 
-### Asistente de IA del portafolio (corto plazo / v1.5)
-Genera la biografía del músico a partir de un formulario de preguntas predefinidas.
-- La IA produce un **borrador**; el músico **edita y aprueba**. Nunca autopublicar.
-- Formulario estructurado (no chat libre). Instruir al modelo a **no inventar datos**.
-- Modelo económico, API key en variable de entorno, límite de generaciones/día por músico.
-- Construir como servicio aislado (`generar_bio(respuestas, contexto_material)`) para
-  poder cambiar la fuente o el modelo después sin tocar la UI.
-
-→ Esqueleto del servicio y el prompt en `ROADMAP.md` §8.
+Genera borradores de biografía desde un formulario de preguntas predefinidas
+(`usuarios/services/bio_ia.py` + vista `asistente_bio`). Principios vigentes:
+- La IA produce un **borrador** (2 variantes); el músico **edita y aprueba** en el
+  editor del portafolio. **Nunca autopublicar** — el borrador viaja por sesión, no
+  se escribe en el modelo.
+- Formulario estructurado (no chat libre). El prompt instruye **no inventar datos**:
+  lo que falta se omite.
+- Modelo económico (`claude-haiku-4-5`, configurable vía `BIO_IA_MODELO`), API key
+  solo en `ANTHROPIC_API_KEY`; sin key el asistente se desactiva con aviso amable.
+- Límite de generaciones/día por músico (modelo `GeneracionBioIA`).
+- El servicio está aislado a propósito: cambiar de modelo o proveedor se hace en
+  `bio_ia.py` sin tocar vistas ni templates. El Modo 2/3 (contexto del material,
+  multimodal) solo cambia `contexto_material` — la firma no se mueve.
 
 ---
 

@@ -52,6 +52,14 @@
   El email del músico jamás se renderiza en el HTML público; el aviso por email
   respeta `recibir_notificaciones_email` y lleva Reply-To del visitante.
 
+### `GeneracionBioIA`
+- **Para qué:** registro de cada uso del asistente de IA de biografías
+  (ROADMAP §8) — alimenta el límite de generaciones/día y mide adopción.
+- **Invariantes:** FK a `Usuario`; una fila por generación (las 2 variantes de
+  una llamada cuentan como una). El límite diario se calcula contando filas
+  de hoy en la vista; el borrador elegido viaja por sesión y **nunca** se
+  escribe directo en `Portafolio.biografia`.
+
 ## Modelos DIFERIDOS (presentes en el código — no construir sobre ellos, no borrar)
 
 > Diferidos por el pivote a vitrina de un solo lado. Modelos y migraciones

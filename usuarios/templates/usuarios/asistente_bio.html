@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Asistente de biografía - Meet & Gig{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-brand text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-magic mr-2" aria-hidden="true"></i>Asistente de biografía
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <p class="text-muted mb-1">
+            Responde estas preguntas y te proponemos dos borradores de tu "Sobre mí".
+            <strong>Tú eliges, editas y apruebas</strong> — nada se publica solo.
+          </p>
+          <p class="small text-muted mb-4">
+            Generaciones disponibles hoy: <strong>{{ restantes }}</strong> de {{ limite }}.
+          </p>
+
+          {% if not asistente_disponible %}
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>
+            El asistente no está disponible en este momento. Puedes escribir tu
+            biografía a mano en <a href="{% url 'editar_portafolio_musico' %}" class="alert-link">Editar Portafolio</a>.
+          </div>
+          {% endif %}
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+              <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{% url 'editar_portafolio_musico' %}" class="btn btn-light">
+                <i class="fas fa-arrow-left mr-1" aria-hidden="true"></i>Volver al portafolio
+              </a>
+              <button type="submit" class="btn btn-brand btn-lg px-4"
+                      {% if not asistente_disponible or restantes == 0 %}disabled{% endif %}>
+                <i class="fas fa-magic mr-2" aria-hidden="true"></i>
+                {% if variantes %}Regenerar{% else %}Generar borradores{% endif %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {% if variantes %}
+      <h5 class="mb-3">Elige una variante (después podrás editarla):</h5>
+      {% for variante in variantes %}
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge badge-secondary">Variante {{ forloop.counter }}</span>
+          </div>
+          <p class="mb-3">{{ variante|linebreaksbr }}</p>
+          <form method="post" action="{% url 'usar_bio_variante' forloop.counter0 %}" class="mb-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-sm">
+              <i class="fas fa-check mr-1" aria-hidden="true"></i>Usar esta variante
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

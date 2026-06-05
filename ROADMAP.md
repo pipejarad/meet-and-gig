@@ -224,6 +224,13 @@ comisión de la plataforma se factura aparte.
 
 ## 8. Diseño: asistente de IA del portafolio
 
+> ✅ **Construido el 05-06-2026** (Modo 1 + prefill desde el portafolio): servicio aislado
+> `usuarios/services/bio_ia.py` con `claude-haiku-4-5` (configurable vía `BIO_IA_MODELO`),
+> 2 variantes por generación + botón regenerar, límite de 5 generaciones/día (modelo
+> `GeneracionBioIA`), human-in-the-loop (la variante elegida se carga como borrador en el
+> editor del portafolio; el músico la edita y guarda — nunca se autopublica). Sin
+> `ANTHROPIC_API_KEY` el asistente se desactiva con aviso. ~US$0.003 por generación.
+
 **Problema que resuelve:** el músico es bueno tocando y malo describiéndose; el "Sobre mí"
 vacío es la causa #1 de portafolios flojos → menos contactos → abandono. Sube la calidad de
 la oferta y la tasa de perfiles completados.
@@ -307,8 +314,8 @@ contacto mediado y, opcional, el asistente de IA).
 - **Bloque 6 — Smoke test.** Recorrer el loop completo en producción con cuentas de prueba
   antes de invitar a nadie.
 
-> Nuevo en la v1 (pivote): ✅ **contacto mediado construido** (sección 5). Opcional: el
-> **asistente de IA** (sección 8). El dominio (`meetandgig.cl`) NO bloquea el lanzamiento.
+> Nuevo en la v1 (pivote): ✅ **contacto mediado construido** (sección 5). ✅ **asistente
+> de IA construido** (sección 8). El dominio (`meetandgig.cl`) NO bloquea el lanzamiento.
 
 ### Pendientes de la auditoría técnica (04-06-2026)
 

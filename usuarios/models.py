@@ -1449,3 +1449,25 @@ class ContactoMusico(models.Model):
 
     def __str__(self):
         return f"{self.remitente_nombre} → {self.musico.usuario.username} ({self.get_estado_display()})"
+
+
+class GeneracionBioIA(models.Model):
+    """Registro de cada uso del asistente de IA de biografías.
+
+    Sirve para el límite de generaciones por día por músico (ROADMAP §8)
+    y como métrica de adopción de la feature.
+    """
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='generaciones_bio',
+    )
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-creado']
+        verbose_name = 'Generación de bio con IA'
+        verbose_name_plural = 'Generaciones de bio con IA'
+
+    def __str__(self):
+        return f"{self.usuario.username} — {self.creado:%Y-%m-%d %H:%M}"

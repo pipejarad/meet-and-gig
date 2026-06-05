@@ -27,3 +27,6 @@ psycopg[binary]==3.2.9
 whitenoise==6.7.0
 gunicorn==23.0.0
 django-storages[s3]==1.14.4
+
+# Asistente de IA del portafolio (ROADMAP §8)
+anthropic==0.105.2
