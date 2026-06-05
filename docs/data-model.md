@@ -39,7 +39,9 @@
 - **Invariantes:** `nombre` único en los cuatro. Seed en la migración 0019
   (portable SQLite/Postgres) y en el comando `poblar_catalogos`.
   `Instrumento`/`Genero` nacieron `managed=False`: en una BD nueva sus tablas
-  las crea la migración 0019, no un `CreateModel`.
+  las crea un `RunPython` portable en la migración **0011** (antes de los
+  modelos que les apuntan con FK — requisito de PostgreSQL); la 0019 conserva
+  un guard idéntico e idempotente.
 
 ### `ContactoMusico`
 - **Para qué:** el contacto mediado de visitantes → músicos; el instrumento de
