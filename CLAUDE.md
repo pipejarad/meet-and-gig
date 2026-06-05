@@ -28,7 +28,7 @@ código existente (te haría asumir un marketplace de dos lados); guíate por es
 **ACTIVO en v1 — trabaja aquí:**
 - Autenticación.
 - Perfil + portafolio público del músico (incluye variantes: solista, banda, proyecto, productora).
-- Contacto mediado de visitantes hacia músicos (NUEVO, aún no existe — ver más abajo).
+- Contacto mediado de visitantes hacia músicos (construido — ver reglas más abajo).
 
 **DIFERIDO pero presente en el código — NO construir sobre esto, NO borrarlo:**
 - Perfil de empleador.
@@ -59,23 +59,26 @@ UI, pero se conservan modelos y migraciones intactos. Vuelven en el mediano/larg
 
 ---
 
-## Diseño nuevo a construir (aún NO está en el código)
+## Contacto mediado (construido) — reglas que deben mantenerse
 
-### Contacto mediado
-Visitantes **no autenticados** contactan a músicos vía un formulario. Modelo nuevo
-`ContactoMusico`. Principios que guían el diseño:
+Visitantes **no autenticados** contactan a músicos vía formulario público
+(`/portafolio/<slug>/contactar/`); el músico gestiona el embudo en "Mis contactos".
+Principios vigentes — no romperlos al evolucionar la feature:
 - **"Mediado = medido, no controlado":** captura el dato y mantén baja la fricción. NO
-  construyas mensajería interna compleja todavía.
+  construyas mensajería interna compleja todavía. El email de aviso lleva Reply-To del
+  visitante para que el músico responda por correo directo.
 - El email del músico **NUNCA** se expone en el HTML público; el formulario hace POST a la
   plataforma y el correo se maneja del lado del servidor.
-- FK de usuario **nullable** (`remitente_usuario`) para poder vincular futuras cuentas de
-  contratista sin reescribir el modelo.
-- Campo `estado` (enviado / visto / respondido / convertido) para medir el embudo; el
-  `convertido` lo marca el músico ("¿se transformó en una pega?"). Es el instrumento de
-  validación del proyecto.
-- Anti-spam mínimo: honeypot + límite por IP. Captcha solo si aparece spam real.
+- FK de usuario **nullable** (`remitente_usuario`): es la bisagra para vincular futuras
+  cuentas de contratista sin reescribir el modelo.
+- Campo `estado` (enviado / visto / respondido / convertido) mide el embudo; el
+  `convertido` lo marca el músico ("¿se transformó en una pega?") y **no debe
+  automatizarse**: es el instrumento de validación del proyecto.
+- Anti-spam mínimo: honeypot + límite por IP (5/hora). Captcha solo si aparece spam real.
 
-→ Esqueleto del modelo y flujo completo en `ROADMAP.md` §5.
+---
+
+## Diseño nuevo a construir (aún NO está en el código)
 
 ### Asistente de IA del portafolio (corto plazo / v1.5)
 Genera la biografía del músico a partir de un formulario de preguntas predefinidas.

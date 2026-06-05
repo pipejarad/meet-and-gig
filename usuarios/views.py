@@ -1,10 +1,13 @@
+import logging
+from datetime import timedelta
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from django.http import HttpResponse, Http404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.urls import reverse, reverse_lazy
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -17,11 +20,12 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.utils import timezone
 from .forms import (
-    RegistroForm, LoginForm, RecuperarPasswordForm, CambiarPasswordForm, 
+    RegistroForm, LoginForm, RecuperarPasswordForm, CambiarPasswordForm,
     PerfilMusicoForm, PerfilEmpleadorForm, PortafolioForm, CrearOfertaLaboralForm,
-    PostulacionForm, SolicitudReferenciaForm, ResponderReferenciaForm, TestimonioDirectoForm
+    PostulacionForm, SolicitudReferenciaForm, ResponderReferenciaForm, TestimonioDirectoForm,
+    ContactoMusicoForm
 )
-from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLaboral, Postulacion, Notificacion, Invitacion, Testimonio
+from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLaboral, Postulacion, Notificacion, Invitacion, Testimonio, ContactoMusico
 
 
 def inicio(request):
@@ -2243,3 +2247,161 @@ def enviar_notificacion_respuesta_referencia(testimonio, aceptada=True):
     except Exception as e:
         print(f"Error enviando notificación respuesta referencia: {str(e)}")
         return False
+
+
+# ============================================================================
+# CONTACTO MEDIADO (v1 — pieza central de la vitrina, ROADMAP §5)
+# ============================================================================
+
+logger_contacto = logging.getLogger('usuarios.contacto')
+
+LIMITE_CONTACTOS_POR_IP_HORA = 5
+
+
+def _ip_del_request(request):
+    """IP real del visitante, considerando el proxy de Railway."""
+    xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    if xff:
+        return xff.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
+def _enviar_email_nuevo_contacto(contacto):
+    """Única notificación activa en v1: email al músico al recibir un contacto.
+
+    El Reply-To apunta al visitante para que el músico responda directo desde
+    su correo (mediado = medido, no controlado). Si el envío falla, el
+    contacto YA quedó guardado: el dato manda.
+    """
+    perfil = contacto.musico
+    if not perfil.recibir_notificaciones_email:
+        return
+    try:
+        cuerpo = render_to_string('emails/nuevo_contacto.txt', {
+            'contacto': contacto,
+            'musico': perfil.usuario,
+            'url_contactos': f"{settings.SITE_URL}{reverse('mis_contactos')}",
+        })
+        EmailMessage(
+            subject=f'Tienes un nuevo contacto en Meet & Gig: {contacto.remitente_nombre}',
+            body=cuerpo,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[perfil.usuario.email],
+            reply_to=[contacto.remitente_email],
+        ).send()
+    except Exception:
+        logger_contacto.exception(
+            'Error enviando email de nuevo contacto (contacto id=%s)', contacto.id
+        )
+
+
+def contactar_musico_view(request, slug):
+    """Formulario público (sin login) para contactar a un músico.
+
+    Principios (CLAUDE.md / ROADMAP §5): el email del músico NUNCA aparece en
+    el HTML; anti-spam mínimo (honeypot + límite por IP); baja fricción.
+    """
+    portafolio = get_object_or_404(
+        Portafolio.objects.select_related('usuario'), slug=slug, activo=True
+    )
+
+    if request.user.is_authenticated and request.user == portafolio.usuario:
+        messages.info(request, 'Este es tu propio portafolio: no puedes contactarte a ti mismo.')
+        return redirect('ver_portafolio', slug=slug)
+
+    if request.method == 'POST':
+        form = ContactoMusicoForm(request.POST)
+        if form.is_valid():
+            # Honeypot: responder como éxito sin guardar (no darle pistas al bot)
+            if form.es_spam():
+                messages.success(request, 'Tu mensaje fue enviado al músico.')
+                return redirect('ver_portafolio', slug=slug)
+
+            ip = _ip_del_request(request)
+            hace_una_hora = timezone.now() - timedelta(hours=1)
+            if ip and ContactoMusico.objects.filter(
+                ip_remitente=ip, creado__gte=hace_una_hora
+            ).count() >= LIMITE_CONTACTOS_POR_IP_HORA:
+                messages.error(
+                    request,
+                    'Has enviado demasiados mensajes seguidos. Intenta de nuevo en un rato.'
+                )
+                return render(request, 'usuarios/contactar_musico.html',
+                              {'form': form, 'portafolio': portafolio})
+
+            perfil, _ = PerfilMusico.objects.get_or_create(usuario=portafolio.usuario)
+            contacto = form.save(commit=False)
+            contacto.musico = perfil
+            contacto.ip_remitente = ip
+            if request.user.is_authenticated:
+                contacto.remitente_usuario = request.user
+            contacto.save()
+
+            _enviar_email_nuevo_contacto(contacto)
+
+            messages.success(
+                request,
+                'Tu mensaje fue enviado. El músico te responderá directamente a tu email.'
+            )
+            return redirect('ver_portafolio', slug=slug)
+        messages.error(request, 'Por favor corrige los errores del formulario.')
+    else:
+        form = ContactoMusicoForm()
+
+    return render(request, 'usuarios/contactar_musico.html',
+                  {'form': form, 'portafolio': portafolio})
+
+
+@login_required
+def mis_contactos_view(request):
+    """Panel del músico: los contactos recibidos y el embudo de estados."""
+    if request.user.tipo_usuario != 'musico':
+        messages.error(request, 'Solo los músicos pueden acceder a esta sección.')
+        return redirect('inicio')
+
+    perfil, _ = PerfilMusico.objects.get_or_create(usuario=request.user)
+    contactos = list(perfil.contactos.all())
+
+    # Embudo: al abrir el panel, lo ENVIADO pasa a VISTO. Esta carga aún
+    # muestra el badge "Nuevo" (nuevos_ids) y deja medido visto_en.
+    nuevos_ids = {c.id for c in contactos if c.estado == ContactoMusico.Estado.ENVIADO}
+    if nuevos_ids:
+        ContactoMusico.objects.filter(id__in=nuevos_ids).update(
+            estado=ContactoMusico.Estado.VISTO, visto_en=timezone.now()
+        )
+
+    context = {
+        'contactos': contactos,
+        'nuevos_ids': nuevos_ids,
+        'total_convertidos': sum(
+            1 for c in contactos if c.estado == ContactoMusico.Estado.CONVERTIDO
+        ),
+    }
+    return render(request, 'usuarios/mis_contactos.html', context)
+
+
+@login_required
+def marcar_contacto_view(request, contacto_id, nuevo_estado):
+    """El músico marca el resultado del contacto (el instrumento de validación:
+    CONVERTIDO = '¿se transformó en una pega?')."""
+    if request.method != 'POST':
+        return redirect('mis_contactos')
+
+    estados_permitidos = {
+        'respondido': ContactoMusico.Estado.RESPONDIDO,
+        'convertido': ContactoMusico.Estado.CONVERTIDO,
+    }
+    if nuevo_estado not in estados_permitidos:
+        raise Http404()
+
+    contacto = get_object_or_404(
+        ContactoMusico, id=contacto_id, musico__usuario=request.user
+    )
+    contacto.estado = estados_permitidos[nuevo_estado]
+    contacto.save(update_fields=['estado'])
+
+    if nuevo_estado == 'convertido':
+        messages.success(request, '¡Excelente! Contacto marcado como convertido en trabajo.')
+    else:
+        messages.success(request, 'Contacto marcado como respondido.')
+    return redirect('mis_contactos')

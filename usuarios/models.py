@@ -1371,3 +1371,81 @@ class Notificacion(models.Model):
             self.leida = True
             self.fecha_lectura = timezone.now()
             self.save()
+
+
+# ============================================================================
+# CONTACTO MEDIADO (v1 — pieza central de la vitrina, ROADMAP §5)
+# ============================================================================
+class ContactoMusico(models.Model):
+    """Contacto de un visitante (anónimo en v1) hacia un músico.
+
+    Principio: "mediado = medido, no controlado" — capturar el dato con la
+    menor fricción posible. El campo `estado` es el embudo de validación del
+    proyecto; CONVERTIDO lo marca el músico ("¿se transformó en una pega?").
+    """
+
+    class Estado(models.TextChoices):
+        ENVIADO = "enviado", "Enviado"
+        VISTO = "visto", "Visto"
+        RESPONDIDO = "respondido", "Respondido"
+        CONVERTIDO = "convertido", "Convertido en trabajo"
+
+    TIPO_NECESIDAD_CHOICES = [
+        ('evento', 'Evento puntual (matrimonio, fiesta, empresa)'),
+        ('recurrente', 'Música en vivo recurrente (bar, restaurante, hotel)'),
+        ('colaboracion', 'Colaboración musical'),
+        ('clases', 'Clases de música'),
+        ('otro', 'Otro'),
+    ]
+
+    # A quién se contacta
+    musico = models.ForeignKey(
+        PerfilMusico,
+        on_delete=models.CASCADE,
+        related_name='contactos',
+        verbose_name='Músico contactado',
+    )
+
+    # Quién contacta — anónimo en v1; la FK nullable es la bisagra para
+    # vincular cuentas de contratista en v2 sin reescribir el modelo.
+    remitente_usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='contactos_enviados',
+        verbose_name='Usuario remitente',
+    )
+    remitente_nombre = models.CharField(max_length=120, verbose_name='Nombre')
+    remitente_email = models.EmailField(verbose_name='Email')
+    remitente_telefono = models.CharField(max_length=30, blank=True, verbose_name='Teléfono')
+
+    # El mensaje
+    mensaje = models.TextField(verbose_name='Mensaje')
+    tipo_necesidad = models.CharField(
+        max_length=60,
+        blank=True,
+        choices=TIPO_NECESIDAD_CHOICES,
+        verbose_name='Tipo de necesidad',
+    )
+
+    # Medición del embudo
+    estado = models.CharField(
+        max_length=20,
+        choices=Estado.choices,
+        default=Estado.ENVIADO,
+        verbose_name='Estado',
+    )
+    creado = models.DateTimeField(auto_now_add=True)
+    visto_en = models.DateTimeField(null=True, blank=True)
+
+    # Trazabilidad / anti-spam
+    ip_remitente = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-creado']
+        verbose_name = 'Contacto a músico'
+        verbose_name_plural = 'Contactos a músicos'
+
+    def __str__(self):
+        return f"{self.remitente_nombre} → {self.musico.usuario.username} ({self.get_estado_display()})"

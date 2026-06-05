@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, SetP
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from PIL import Image
-from .models import (Usuario, PerfilMusico, PerfilEmpleador, Portafolio,OfertaLaboral, OfertaInstrumento, OfertaGenero, Postulacion, Testimonio)
+from .models import (Usuario, PerfilMusico, PerfilEmpleador, Portafolio,OfertaLaboral, OfertaInstrumento, OfertaGenero, Postulacion, Testimonio, ContactoMusico)
 
 
 def validate_image_file(image):
@@ -1079,3 +1079,38 @@ class TestimonioDirectoForm(forms.ModelForm):
             testimonio.save()
         
         return testimonio
+
+
+class ContactoMusicoForm(forms.ModelForm):
+    """Formulario público del contacto mediado (ROADMAP §5).
+
+    `sitio_web` es un honeypot: invisible para humanos (oculto en el template);
+    si llega con contenido, el envío se descarta sin avisar al bot.
+    """
+
+    sitio_web = forms.CharField(
+        required=False,
+        label='Sitio web',
+        widget=forms.TextInput(attrs={'autocomplete': 'off', 'tabindex': '-1'}),
+    )
+
+    class Meta:
+        model = ContactoMusico
+        fields = ['remitente_nombre', 'remitente_email', 'remitente_telefono',
+                  'tipo_necesidad', 'mensaje']
+        widgets = {
+            'remitente_nombre': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': 'Tu nombre'}),
+            'remitente_email': forms.EmailInput(attrs={
+                'class': 'form-control', 'placeholder': 'tu@correo.cl'}),
+            'remitente_telefono': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': '+56 9 1234 5678 (opcional)'}),
+            'tipo_necesidad': forms.Select(attrs={'class': 'form-select'}),
+            'mensaje': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 5,
+                'placeholder': 'Cuéntale qué necesitas: fecha, lugar, tipo de evento u oportunidad…'}),
+        }
+
+    def es_spam(self):
+        """True si el honeypot vino con contenido (solo válido tras is_valid())."""
+        return bool(self.cleaned_data.get('sitio_web'))

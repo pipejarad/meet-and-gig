@@ -414,6 +414,17 @@
                         </div>
                         {% endif %}
                         {% endcomment %}
+
+                        <!-- Contacto mediado: cualquier visitante puede escribirle al músico -->
+                        {% if not es_propietario %}
+                        <div class="mt-2">
+                            <a href="{% url 'contactar_musico' slug=portafolio.slug %}"
+                               class="btn btn-light btn-lg">
+                                <i class="fas fa-envelope me-1"></i>
+                                Contactar
+                            </a>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -777,7 +788,10 @@
                 </div>
                 <div class="card-body text-center">
                     <h6>¿Te interesa contratar este talento?</h6>
-                    <p class="text-muted small">Encuentra más músicos como {{ portafolio.usuario.get_full_name }}</p>
+                    <a href="{% url 'contactar_musico' slug=portafolio.slug %}" class="btn btn-primary btn-sm d-block mb-2">
+                        <i class="fas fa-envelope me-1"></i>Contactar a {{ portafolio.usuario.get_full_name|default:portafolio.usuario.username }}
+                    </a>
+                    <p class="text-muted small mb-2">O encuentra más músicos como {{ portafolio.usuario.get_full_name }}</p>
                     <a href="{% url 'buscar_portafolios' %}" class="btn btn-success btn-sm">
                         <i class="icon-search me-1"></i>Buscar más músicos
                     </a>

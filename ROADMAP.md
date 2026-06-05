@@ -102,6 +102,11 @@ Se integra el pago mediado y la infraestructura de confianza.
 
 ## 5. Diseño: contacto mediado (pieza nueva de la v1)
 
+> ✅ **Construido el 05-06-2026**: modelo `ContactoMusico` (migración 0026), formulario
+> público con honeypot + límite de 5/hora por IP, panel "Mis contactos" con el embudo
+> (ENVIADO→VISTO automático al abrir el panel; RESPONDIDO/CONVERTIDO los marca el músico),
+> email de aviso con Reply-To del visitante, y admin para medir el embudo.
+
 **Principio:** "mediado" = **medido**, no controlado. En v1, captura siempre el dato y
 mantén baja la fricción; aprieta el control (mensajería interna, límites) después. El
 riesgo real ahora no es la filtración (que aún no monetizas) sino que los primeros y
@@ -302,7 +307,7 @@ contacto mediado y, opcional, el asistente de IA).
 - **Bloque 6 — Smoke test.** Recorrer el loop completo en producción con cuentas de prueba
   antes de invitar a nadie.
 
-> Nuevo en la v1 (pivote): construir el **contacto mediado** (sección 5). Opcional: el
+> Nuevo en la v1 (pivote): ✅ **contacto mediado construido** (sección 5). Opcional: el
 > **asistente de IA** (sección 8). El dominio (`meetandgig.cl`) NO bloquea el lanzamiento.
 
 ### Pendientes de la auditoría técnica (04-06-2026)

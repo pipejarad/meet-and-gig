@@ -41,10 +41,16 @@
   `Instrumento`/`Genero` nacieron `managed=False`: en una BD nueva sus tablas
   las crea la migración 0019, no un `CreateModel`.
 
-### `ContactoMusico` — PRÓXIMO (aún no existe)
-- La pieza nueva de la v1: contacto mediado de visitantes → músicos.
-  Diseño completo en `ROADMAP.md` §5 (FK nullable a usuario como bisagra a v2,
-  campo `estado` como embudo de validación, email del músico nunca en el HTML).
+### `ContactoMusico`
+- **Para qué:** el contacto mediado de visitantes → músicos; el instrumento de
+  validación del proyecto (ROADMAP §5).
+- **Invariantes:** FK a `PerfilMusico` (related `contactos`); `remitente_usuario`
+  **nullable** — la bisagra para cuentas de contratista en v2. Embudo `estado`:
+  ENVIADO→VISTO ocurre automático al abrir "Mis contactos" (sella `visto_en`);
+  RESPONDIDO/CONVERTIDO los marca el músico a mano — **nunca automatizar
+  `convertido`**. `ip_remitente` alimenta el límite anti-spam (5/hora por IP).
+  El email del músico jamás se renderiza en el HTML público; el aviso por email
+  respeta `recibir_notificaciones_email` y lleva Reply-To del visitante.
 
 ## Modelos DIFERIDOS (presentes en el código — no construir sobre ellos, no borrar)
 

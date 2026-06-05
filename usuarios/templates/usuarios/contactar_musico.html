@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Contactar a {{ portafolio.usuario.get_full_name|default:portafolio.usuario.username }} - Meet & Gig{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-brand text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-envelope mr-2" aria-hidden="true"></i>
+            Contactar a {{ portafolio.usuario.get_full_name|default:portafolio.usuario.username }}
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <p class="text-muted mb-4">
+            Completa el formulario y tu mensaje le llegará directamente.
+            Te responderá a tu email — no necesitas crear una cuenta.
+          </p>
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label for="{{ form.remitente_nombre.id_for_label }}" class="form-label fw-bold">
+                {{ form.remitente_nombre.label }} *
+              </label>
+              {{ form.remitente_nombre }}
+              {% if form.remitente_nombre.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in form.remitente_nombre.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.remitente_email.id_for_label }}" class="form-label fw-bold">
+                  {{ form.remitente_email.label }} *
+                </label>
+                {{ form.remitente_email }}
+                {% if form.remitente_email.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.remitente_email.errors %}{{ error }}{% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.remitente_telefono.id_for_label }}" class="form-label fw-bold">
+                  {{ form.remitente_telefono.label }}
+                </label>
+                {{ form.remitente_telefono }}
+                {% if form.remitente_telefono.errors %}
+                  <div class="text-danger small mt-1">
+                    {% for error in form.remitente_telefono.errors %}{{ error }}{% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.tipo_necesidad.id_for_label }}" class="form-label fw-bold">
+                {{ form.tipo_necesidad.label }}
+              </label>
+              {{ form.tipo_necesidad }}
+              {% if form.tipo_necesidad.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in form.tipo_necesidad.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="mb-4">
+              <label for="{{ form.mensaje.id_for_label }}" class="form-label fw-bold">
+                {{ form.mensaje.label }} *
+              </label>
+              {{ form.mensaje }}
+              {% if form.mensaje.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in form.mensaje.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            {# Honeypot anti-spam: invisible para humanos; los bots lo rellenan #}
+            <div style="position:absolute; left:-9999px; top:-9999px;" aria-hidden="true">
+              <label for="{{ form.sitio_web.id_for_label }}">{{ form.sitio_web.label }}</label>
+              {{ form.sitio_web }}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{% url 'ver_portafolio' slug=portafolio.slug %}" class="btn btn-light">
+                <i class="fas fa-arrow-left mr-1" aria-hidden="true"></i>Volver al portafolio
+              </a>
+              <button type="submit" class="btn btn-brand btn-lg px-4">
+                <i class="fas fa-paper-plane mr-2" aria-hidden="true"></i>Enviar mensaje
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

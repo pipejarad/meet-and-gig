@@ -32,6 +32,11 @@ urlpatterns = [
     # URLs de búsqueda (Ticket 2.8)
     path('buscar/', views.buscar_portafolios, name='buscar_portafolios'),
     path('musicos/', views.buscar_portafolios, name='listar_portafolios'),
+
+    # Contacto mediado (v1 — ROADMAP §5)
+    path('portafolio/<slug:slug>/contactar/', views.contactar_musico_view, name='contactar_musico'),
+    path('mis-contactos/', views.mis_contactos_view, name='mis_contactos'),
+    path('contactos/<int:contacto_id>/marcar/<str:nuevo_estado>/', views.marcar_contacto_view, name='marcar_contacto'),
     
     # === DIFERIDO v1 (pivote a vitrina) — ofertas, postulaciones, notificaciones, ===
     # === invitaciones y referencias. Reactivar descomentando. Ver CLAUDE.md (SCOPE v1). ===

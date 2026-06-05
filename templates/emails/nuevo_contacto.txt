@@ -1,0 +1,20 @@
+Hola {{ musico.first_name|default:musico.username }}:
+
+Tienes un nuevo contacto en Meet & Gig.
+
+De: {{ contacto.remitente_nombre }} ({{ contacto.remitente_email }})
+{% if contacto.remitente_telefono %}Teléfono: {{ contacto.remitente_telefono }}
+{% endif %}{% if contacto.tipo_necesidad %}Necesita: {{ contacto.get_tipo_necesidad_display }}
+{% endif %}
+Mensaje:
+{{ contacto.mensaje }}
+
+Puedes responderle directamente respondiendo este correo, o revisar todos
+tus contactos en:
+{{ url_contactos }}
+
+Cuando lo concretes, no olvides marcarlo como "convertido en trabajo" en tu
+panel: nos ayuda a que la plataforma funcione mejor para todos los músicos.
+
+Saludos,
+El equipo de Meet & Gig

@@ -1,11 +1,21 @@
 from django.contrib import admin
 from .models import (
-    Usuario, PerfilEmpleador, PerfilMusico, Portafolio, 
+    Usuario, PerfilEmpleador, PerfilMusico, Portafolio,
     Instrumento, Genero, NivelExperiencia, Ubicacion,
     PortafolioInstrumento, PortafolioGenero, Multimedia, Testimonio,
     OfertaLaboral, Postulacion, OfertaInstrumento, OfertaGenero,
-    Invitacion, Notificacion
+    Invitacion, Notificacion, ContactoMusico
 )
+
+
+@admin.register(ContactoMusico)
+class ContactoMusicoAdmin(admin.ModelAdmin):
+    """El embudo de validación del proyecto, medible desde el admin."""
+    list_display = ('remitente_nombre', 'musico', 'tipo_necesidad', 'estado', 'creado')
+    list_filter = ('estado', 'tipo_necesidad', 'creado')
+    search_fields = ('remitente_nombre', 'remitente_email', 'musico__usuario__username')
+    readonly_fields = ('creado', 'visto_en', 'ip_remitente')
+    date_hierarchy = 'creado'
 
 
 class PerfilMusicoAdmin(admin.ModelAdmin):
