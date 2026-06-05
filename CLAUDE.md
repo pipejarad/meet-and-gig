@@ -104,6 +104,9 @@ Genera borradores de biografía desde un formulario de preguntas predefinidas
   `django-storages`. No asumas que el disco local guarda nada permanente.
 - Estáticos → **WhiteNoise** (no montar S3 para esto).
 - Gunicorn como servidor de aplicación. HTTPS lo da Railway en su subdominio.
+- `ANTHROPIC_API_KEY` (asistente de IA) es **opcional**: sin ella el asistente se
+  desactiva solo con un aviso. Nada más del sitio depende de la API de Anthropic —
+  no bloquea el lanzamiento.
 
 ---
 
