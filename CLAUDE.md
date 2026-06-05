@@ -109,3 +109,20 @@ Genera la biografía del músico a partir de un formulario de preguntas predefin
   lo contradiga.
 - La plataforma es **intermediario, no empleador ni parte del contrato.** No agregues
   lógica que posicione a la plataforma como empleador.
+
+---
+
+## Matriz de impacto (si tocas X, revisa Y)
+
+> Le dice al agente (y al hook anti-drift) qué documentación revisar según qué
+> parte del código se tocó. El hook bloquea `git push` solo en lo más sensible
+> (ver `scripts/check-docs-before-push.sh`); esta tabla es la guía completa.
+
+| Si tocaste…                                       | Revisa actualizar…                                           |
+|---------------------------------------------------|--------------------------------------------------------------|
+| `*/models.py`, `*/migrations/`                    | `docs/data-model.md` (mapa de modelos activo / diferido)     |
+| `*/views.py`, `*/urls.py`                         | flujos en `ROADMAP.md`                                       |
+| Servicio nuevo (`generar_bio`, email de contacto) | `ROADMAP.md` (§5 contacto mediado, §8 asistente IA)          |
+| Cliente externo (R2, pasarela de pago, API IA)    | sección Despliegue / Restricciones duras de este `CLAUDE.md` |
+| Nueva variable de entorno                         | `.env.example` (y cargarla en Railway al desplegar)          |
+| Bug encontrado o arreglado                        | `ROADMAP.md` §9 (pendientes de la auditoría técnica)         |

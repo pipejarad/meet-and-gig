@@ -173,3 +173,7 @@ logs/
 # Archivos temporales
 tmp/
 temp/
+
+# Claude Code - estado local de la maquina (no compartir)
+.claude/settings.local.json
+.claude/.docs-checked
