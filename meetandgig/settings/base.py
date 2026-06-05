@@ -104,6 +104,10 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Techo del cuerpo de requests no-archivo (defensa en profundidad; los
+# archivos subidos se validan aparte con un máximo de 5MB en los forms)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 8 * 1024 * 1024
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --------------------------------------------------------------------------

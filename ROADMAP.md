@@ -328,18 +328,16 @@ para Postgres (migración 0019 portable; unicidad case-insensitive de email/user
 - [ ] En Railway (Bloque 5): cargar variables reales del `.env.example`, crear el
       add-on Postgres, y configurar `python manage.py migrate` como pre-deploy.
 
-**Mejoras medianas (sin urgencia, antes de tener tráfico real):**
-- [ ] Límite de píxeles en `validate_image_file` (DoS por decompression bomb) y
+**Mejoras medianas:** ✅ *Resueltas el 05-06-2026:*
+- [x] Límite de 25 megapíxeles en `validate_image_file` (anti decompression bomb) y
       `DATA_UPLOAD_MAX_MEMORY_SIZE` en settings.
-- [ ] `transaction.atomic` en `registro_view` (hoy puede quedar un usuario a medias si
-      algo falla después de crearlo).
-- [ ] `/perfil/<username>/` no respeta `Portafolio.activo`: un músico "despublicado"
-      sigue visible por URL directa.
-- [ ] Generación de slug de `Portafolio` no atómica (race condition con Gunicorn
-      multi-worker → IntegrityError 500).
-- [ ] Botón "Configuración" del dropdown (`base.html`) es un `href="#"` muerto.
-- [ ] N+1 en `PortafolioUnificadoView._generate_keywords` (usa properties que ignoran
-      el prefetch) — la vista más visitada de la vitrina.
+- [x] `transaction.atomic` en `registro_view` (usuario + perfil se crean juntos o nada).
+- [x] `/perfil/<username>/` respeta `Portafolio.activo` (404 al público si está
+      despublicado; el propietario sigue viéndolo).
+- [x] Slug de `Portafolio` con reintento ante IntegrityError (race con multi-worker).
+- [x] Enlaces muertos del dropdown ("Configuración", "Mi Perfil" del else) comentados.
+- [x] `PortafolioUnificadoView` con `select_related`/`prefetch_related` y keywords desde
+      las relaciones prefeteadas; sin doble `get_object()`.
 
 **Bugs en módulos DIFERIDOS — corregir AL REACTIVARLOS, no antes:**
 - [ ] `views.py` ~1217: llama `enviar_notificacion_resultado_postulacion(postulacion=…,

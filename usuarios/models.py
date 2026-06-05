@@ -1,5 +1,7 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import AbstractUser, UserManager
-from django.db import models
+from django.db import IntegrityError, models
 from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.text import slugify
@@ -398,6 +400,15 @@ class Portafolio(models.Model):
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = slug
+            # exists() + save no es atómico: con varios workers, dos creaciones
+            # simultáneas pueden elegir el mismo slug. Reintento con sufijo
+            # aleatorio en vez de responder 500.
+            try:
+                super().save(*args, **kwargs)
+            except IntegrityError:
+                self.slug = f"{base_slug}-{uuid4().hex[:6]}"
+                super().save(*args, **kwargs)
+            return
         super().save(*args, **kwargs)
 
     def get_instrumentos_principales(self):

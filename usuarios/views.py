@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db import transaction
 from django.http import HttpResponse, Http404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
@@ -56,10 +57,14 @@ def registro_view(request):
         form = RegistroForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                user = form.save()
-                # En v1 todo registro es músico; crear su perfil de inmediato para
-                # que el perfil público exista desde el primer día (la vitrina).
-                PerfilMusico.objects.get_or_create(usuario=user)
+                # Atómico: si falla la creación del perfil, no queda un
+                # Usuario a medias (que bloquearía el reintento con
+                # "email ya registrado").
+                with transaction.atomic():
+                    user = form.save()
+                    # En v1 todo registro es músico; crear su perfil de inmediato para
+                    # que el perfil público exista desde el primer día (la vitrina).
+                    PerfilMusico.objects.get_or_create(usuario=user)
                 messages.success(
                     request,
                     f'¡Bienvenido {user.username}! Tu cuenta ha sido creada exitosamente.'
@@ -497,16 +502,24 @@ def editar_portafolio_musico(request):
 def ver_perfil_musico(request, username):
     """Vista pública del perfil de un músico"""
     usuario = get_object_or_404(Usuario, username=username, tipo_usuario='musico')
-    
+
     try:
         perfil = usuario.perfil_musico
     except PerfilMusico.DoesNotExist:
         raise Http404("Este músico no tiene un perfil disponible.")
-    
+
+    es_mi_perfil = request.user.is_authenticated and request.user == usuario
+
+    # Un portafolio despublicado (activo=False) oculta también el perfil
+    # público (igual que en búsqueda y home), salvo para el propio músico.
+    portafolio = getattr(usuario, 'portafolio', None)
+    if portafolio and not portafolio.activo and not es_mi_perfil:
+        raise Http404("Este músico no tiene un perfil disponible.")
+
     context = {
         'perfil': perfil,
         'usuario': usuario,
-        'es_mi_perfil': request.user.is_authenticated and request.user == usuario,
+        'es_mi_perfil': es_mi_perfil,
         'titulo': f'Perfil de {usuario.get_full_name() or usuario.username}'
     }
     return render(request, 'usuarios/ver_perfil_musico.html', context)
@@ -635,10 +648,19 @@ class PortafolioUnificadoView(DetailView):
     template_name = 'usuarios/portafolio_publico.html'
     slug_field = 'slug'
     context_object_name = 'portafolio'
-    
+
+    def get_queryset(self):
+        # La vista pública más visitada: traer relaciones de una vez
+        return Portafolio.objects.select_related(
+            'usuario', 'ubicacion', 'nivel_experiencia'
+        ).prefetch_related(
+            'portafolio_instrumentos__instrumento',
+            'portafolio_generos__genero',
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        portafolio = self.get_object()
+        portafolio = self.object  # ya resuelto por DetailView; no re-consultar
         
         # Detectar si el usuario es propietario del portafolio
         context['es_propietario'] = (
@@ -665,8 +687,10 @@ class PortafolioUnificadoView(DetailView):
     def _generate_keywords(self, portafolio):
         keywords = []
         try:
-            keywords.extend([inst.nombre for inst in portafolio.instrumentos.all()])
-            keywords.extend([gen.nombre for gen in portafolio.generos.all()])
+            # Usar las relaciones prefeteadas en get_queryset (las properties
+            # instrumentos/generos ejecutan queries nuevas que ignoran el prefetch)
+            keywords.extend([pi.instrumento.nombre for pi in portafolio.portafolio_instrumentos.all()])
+            keywords.extend([pg.genero.nombre for pg in portafolio.portafolio_generos.all()])
         except Exception:
             keywords.extend(['músico', 'música'])
             

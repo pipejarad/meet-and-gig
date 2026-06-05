@@ -340,13 +340,17 @@
                                     </a>
                                 {% endcomment %}
                                 {% else %}
+                                    {% comment %}Enlace muerto (href="#") — sin página destino aún
                                     <a class="dropdown-item" href="#">
                                         <i class="fas fa-user mr-2" aria-hidden="true"></i>Mi Perfil
                                     </a>
+                                    {% endcomment %}
                                 {% endif %}
+                                {% comment %}Enlace muerto: la página de configuración no existe aún
                                 <a class="dropdown-item" href="#">
                                     <i class="fas fa-cog mr-2" aria-hidden="true"></i>Configuración
                                 </a>
+                                {% endcomment %}
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{% url 'logout' %}">
                                     <i class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i>Cerrar Sesión

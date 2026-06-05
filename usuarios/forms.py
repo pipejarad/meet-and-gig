@@ -16,7 +16,14 @@ def validate_image_file(image):
         # Validar que sea una imagen válida
         try:
             img = Image.open(image)
+            # Techo de píxeles ANTES de decodificar: una "decompression bomb"
+            # (pocos KB que se expanden a cientos de MB) agotaría la memoria.
+            ancho, alto = img.size
+            if ancho * alto > 25_000_000:  # ~25 megapíxeles
+                raise ValidationError("La imagen es demasiado grande (máximo 25 megapíxeles).")
             img.verify()
+        except ValidationError:
+            raise
         except Exception:
             raise ValidationError("El archivo debe ser una imagen válida (JPG, PNG, GIF).")
         
