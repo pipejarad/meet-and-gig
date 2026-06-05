@@ -128,13 +128,16 @@ def recuperar_password_view(request):
             try:
                 user = Usuario.objects.get(email__iexact=email)
                 _send_password_reset_email(request, user)
-                messages.success(
-                    request, 
-                    'Se ha enviado un enlace de recuperación a tu email. Revisa tu bandeja de entrada.'
-                )
-                return redirect('login')
             except Usuario.DoesNotExist:
-                messages.error(request, 'No existe un usuario con este email.')
+                # Respuesta idéntica exista o no la cuenta, para no revelar
+                # qué emails están registrados (enumeración de usuarios).
+                pass
+            messages.success(
+                request,
+                'Si el email está registrado, te enviamos un enlace de recuperación. '
+                'Revisa tu bandeja de entrada.'
+            )
+            return redirect('login')
         else:
             messages.error(request, 'Por favor corrige los errores en el formulario.')
     else:

@@ -33,15 +33,15 @@
     {
         "@context": "https://schema.org",
         "@type": "Person",
-        "name": "{{ portafolio.usuario.get_full_name }}",
-        "description": "{{ seo_description }}",
+        "name": "{{ portafolio.usuario.get_full_name|escapejs }}",
+        "description": "{{ seo_description|escapejs }}",
         {% if portafolio.usuario.foto_perfil %}
         "image": "{{ request.scheme }}://{{ request.get_host }}{{ portafolio.usuario.foto_perfil.url }}",
         {% endif %}
         "jobTitle": "Músico",
         "address": {
             "@type": "PostalAddress",
-            "addressLocality": "{{ portafolio.ubicacion }}"
+            "addressLocality": "{{ portafolio.ubicacion|escapejs }}"
         }
         {% if portafolio.youtube_url or portafolio.spotify_url or portafolio.instagram_url %}
         ,"sameAs": [
@@ -652,7 +652,7 @@
             {% if user.is_authenticated and user.tipo_usuario == 'empleador' and not es_propietario %}
                 {% comment %}DIFERIDO v1 (pivote a vitrina): contacto directo para empleadores
                 <!-- Para empleadores: siempre mostrar contacto disponible -->
-                {% if portafolio.usuario.email or portafolio.usuario.telefono %}
+                {% if portafolio.usuario.email or portafolio.usuario.perfil_musico.telefono %}
                 <div class="card info-card">
                     <div class="card-header">
                         <i class="fas fa-address-book"></i> Información de Contacto
@@ -668,11 +668,11 @@
                         </div>
                         {% endif %}
                         
-                        {% if portafolio.usuario.telefono %}
+                        {% if portafolio.usuario.perfil_musico.telefono %}
                         <div class="mb-2">
                             <strong><i class="fas fa-phone me-2"></i>Teléfono:</strong><br>
-                            <a href="tel:{{ portafolio.usuario.telefono }}" class="text-decoration-none">
-                                {{ portafolio.usuario.telefono }}
+                            <a href="tel:{{ portafolio.usuario.perfil_musico.telefono }}" class="text-decoration-none">
+                                {{ portafolio.usuario.perfil_musico.telefono }}
                             </a>
                         </div>
                         {% endif %}
@@ -707,11 +707,11 @@
                         </div>
                         {% endif %}
                         
-                        {% if portafolio.show_telefono and portafolio.usuario.telefono %}
+                        {% if portafolio.show_telefono and portafolio.usuario.perfil_musico.telefono %}
                         <div class="mb-2">
                             <strong><i class="fas fa-phone me-2"></i>Teléfono:</strong><br>
-                            <a href="tel:{{ portafolio.usuario.telefono }}" class="text-decoration-none">
-                                {{ portafolio.usuario.telefono }}
+                            <a href="tel:{{ portafolio.usuario.perfil_musico.telefono }}" class="text-decoration-none">
+                                {{ portafolio.usuario.perfil_musico.telefono }}
                             </a>
                         </div>
                         {% endif %}
