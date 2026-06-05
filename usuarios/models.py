@@ -1,7 +1,17 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.text import slugify
+
+
+class UsuarioManager(UserManager):
+    """Normaliza el email a minúsculas en toda vía de creación (createsuperuser,
+    shell, admin), igual que hace RegistroForm en el flujo web. Sin esto, el
+    login por email__iexact puede encontrar duplicados y fallar con 500."""
+
+    def _create_user(self, username, email, password, **extra_fields):
+        return super()._create_user(username, (email or '').lower(), password, **extra_fields)
 
 
 class Usuario(AbstractUser):
@@ -9,7 +19,7 @@ class Usuario(AbstractUser):
         ('musico', 'Músico'),
         ('empleador', 'Empleador'),
     ]
-    
+
     email = models.EmailField(
         unique=True,
         error_messages={
@@ -17,23 +27,33 @@ class Usuario(AbstractUser):
         }
     )
     tipo_usuario = models.CharField(
-        max_length=10, 
+        max_length=10,
         choices=TIPO_CHOICES,
         verbose_name='Tipo de usuario'
     )
     foto_perfil = models.ImageField(
-        upload_to='fotos_perfil/', 
-        null=True, 
+        upload_to='fotos_perfil/',
+        null=True,
         blank=True,
         verbose_name='Foto de perfil'
     )
-    
+
+    objects = UsuarioManager()
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'tipo_usuario']
-    
+
     class Meta:
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
+        constraints = [
+            # La unicidad estándar de email/username es case-sensitive a nivel
+            # de BD; los forms validan con __iexact pero admin/shell no pasan
+            # por ellos. Estas constraints cierran ese hueco (y funcionan igual
+            # en SQLite y PostgreSQL).
+            models.UniqueConstraint(Lower('email'), name='usuario_email_ci_unico'),
+            models.UniqueConstraint(Lower('username'), name='usuario_username_ci_unico'),
+        ]
 
 
 # CATÁLOGOS NORMALIZADOS (Ticket 2.9)
