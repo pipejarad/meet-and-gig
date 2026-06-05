@@ -57,8 +57,11 @@ def registro_view(request):
         if form.is_valid():
             try:
                 user = form.save()
+                # En v1 todo registro es músico; crear su perfil de inmediato para
+                # que el perfil público exista desde el primer día (la vitrina).
+                PerfilMusico.objects.get_or_create(usuario=user)
                 messages.success(
-                    request, 
+                    request,
                     f'¡Bienvenido {user.username}! Tu cuenta ha sido creada exitosamente.'
                 )
                 # Especificar el backend para el login

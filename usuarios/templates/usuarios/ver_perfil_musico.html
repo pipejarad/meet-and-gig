@@ -264,7 +264,7 @@
                         </a>
                     {% else %}
                         {% if usuario.portafolio %}
-                            <a href="{% url 'ver_portafolio_musico' usuario.username %}" class="btn btn-primary btn-sm d-block">
+                            <a href="{% url 'ver_portafolio' slug=usuario.portafolio.slug %}" class="btn btn-primary btn-sm d-block">
                                 <i class="icon-briefcase"></i> Ver Portafolio
                             </a>
                         {% else %}
