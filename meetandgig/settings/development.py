@@ -24,13 +24,6 @@ DATABASES = {
 }
 
 # --------------------------------------------------------------------------
-# Archivos estáticos — servir desde el directorio del proyecto en dev
-# --------------------------------------------------------------------------
-STATICFILES_DIRS = [
-    BASE_DIR / 'meetandgig' / 'static',  # noqa: F405
-]
-
-# --------------------------------------------------------------------------
 # Email — imprime en consola, no envía emails reales
 # --------------------------------------------------------------------------
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -11,6 +11,7 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'meetandgig.settings.development')
+# Default seguro: igual que wsgi.py, los servidores entran por aquí.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'meetandgig.settings.production')
 
 application = get_asgi_application()

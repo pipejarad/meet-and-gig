@@ -314,18 +314,19 @@ para Postgres (migración 0019 portable; unicidad case-insensitive de email/user
 `UsuarioManager` que normaliza). Lo que sigue queda pendiente:
 
 **Al hacer los Bloques 3-5 (config de deploy) — bloqueantes de producción:**
-- [ ] `SECURE_PROXY_SSL_HEADER` + `CSRF_TRUSTED_ORIGINS` en `production.py`. Sin esto,
-      detrás del proxy de Railway: bucle de redirección infinito y 403 CSRF en todos
-      los formularios (login incluido).
-- [ ] Mover `STATICFILES_DIRS` de `development.py` a `base.py`. Sin esto, `collectstatic`
-      en producción solo copia los estáticos del admin → sitio sin CSS/JS/logo.
-- [ ] `requirements.txt`: agregar `psycopg[binary]`, `whitenoise` (+ su middleware tras
-      SecurityMiddleware), `gunicorn`, `django-storages`+`boto3`; **quitar**
-      `djangorestframework` (sin uso, versión antigua con CVEs). Nota: `dj-database-url`
-      NO hace falta — `env.db()` de django-environ ya resuelve `DATABASE_URL`.
-- [ ] `LOGGING` a stdout (Railway lo captura) para no quedar ciegos ante errores 500.
-- [ ] Setear `DJANGO_SETTINGS_MODULE=meetandgig.settings.production` en Railway
-      (el default de `wsgi.py` es development).
+✅ *Resuelto el 05-06-2026* — la config quedó lista para Railway:
+- [x] `SECURE_PROXY_SSL_HEADER` + `CSRF_TRUSTED_ORIGINS` en `production.py`.
+- [x] `STATICFILES_DIRS` movido a `base.py` (collectstatic en producción: 895 archivos,
+      antes 125). WhiteNoise con manifest comprimido + middleware en `base.py`.
+- [x] `requirements.txt`: `psycopg[binary]`, `whitenoise`, `gunicorn`,
+      `django-storages[s3]`; eliminado `djangorestframework`. (`dj-database-url` no
+      hace falta — `env.db()` ya resuelve `DATABASE_URL`.)
+- [x] `LOGGING` a stdout en `production.py`.
+- [x] `wsgi.py`/`asgi.py` ahora asumen `settings.production` por defecto (fail-safe);
+      `manage.py` sigue en development. `Procfile` creado.
+- [x] Media en R2 vía `STORAGES` condicionado a `AWS_*` (variables en `.env.example`).
+- [ ] En Railway (Bloque 5): cargar variables reales del `.env.example`, crear el
+      add-on Postgres, y configurar `python manage.py migrate` como pre-deploy.
 
 **Mejoras medianas (sin urgencia, antes de tener tráfico real):**
 - [ ] Límite de píxeles en `validate_image_file` (DoS por decompression bomb) y
