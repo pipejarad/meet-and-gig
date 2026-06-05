@@ -305,6 +305,52 @@ contacto mediado y, opcional, el asistente de IA).
 > Nuevo en la v1 (pivote): construir el **contacto mediado** (sección 5). Opcional: el
 > **asistente de IA** (sección 8). El dominio (`meetandgig.cl`) NO bloquea el lanzamiento.
 
+### Pendientes de la auditoría técnica (04-06-2026)
+
+Auditoría en 5 dimensiones (correctness, templates/URLs, seguridad, modelos/migraciones,
+config/deploy). **Ya corregido:** Bloque 0 + bugs funcionales de la vitrina (teléfono
+público, SEO del portafolio, enumeración de usuarios, copys del pivote) y preparación
+para Postgres (migración 0019 portable; unicidad case-insensitive de email/username +
+`UsuarioManager` que normaliza). Lo que sigue queda pendiente:
+
+**Al hacer los Bloques 3-5 (config de deploy) — bloqueantes de producción:**
+- [ ] `SECURE_PROXY_SSL_HEADER` + `CSRF_TRUSTED_ORIGINS` en `production.py`. Sin esto,
+      detrás del proxy de Railway: bucle de redirección infinito y 403 CSRF en todos
+      los formularios (login incluido).
+- [ ] Mover `STATICFILES_DIRS` de `development.py` a `base.py`. Sin esto, `collectstatic`
+      en producción solo copia los estáticos del admin → sitio sin CSS/JS/logo.
+- [ ] `requirements.txt`: agregar `psycopg[binary]`, `whitenoise` (+ su middleware tras
+      SecurityMiddleware), `gunicorn`, `django-storages`+`boto3`; **quitar**
+      `djangorestframework` (sin uso, versión antigua con CVEs). Nota: `dj-database-url`
+      NO hace falta — `env.db()` de django-environ ya resuelve `DATABASE_URL`.
+- [ ] `LOGGING` a stdout (Railway lo captura) para no quedar ciegos ante errores 500.
+- [ ] Setear `DJANGO_SETTINGS_MODULE=meetandgig.settings.production` en Railway
+      (el default de `wsgi.py` es development).
+
+**Mejoras medianas (sin urgencia, antes de tener tráfico real):**
+- [ ] Límite de píxeles en `validate_image_file` (DoS por decompression bomb) y
+      `DATA_UPLOAD_MAX_MEMORY_SIZE` en settings.
+- [ ] `transaction.atomic` en `registro_view` (hoy puede quedar un usuario a medias si
+      algo falla después de crearlo).
+- [ ] `/perfil/<username>/` no respeta `Portafolio.activo`: un músico "despublicado"
+      sigue visible por URL directa.
+- [ ] Generación de slug de `Portafolio` no atómica (race condition con Gunicorn
+      multi-worker → IntegrityError 500).
+- [ ] Botón "Configuración" del dropdown (`base.html`) es un `href="#"` muerto.
+- [ ] N+1 en `PortafolioUnificadoView._generate_keywords` (usa properties que ignoran
+      el prefetch) — la vista más visitada de la vitrina.
+
+**Bugs en módulos DIFERIDOS — corregir AL REACTIVARLOS, no antes:**
+- [ ] `views.py` ~1217: llama `enviar_notificacion_resultado_postulacion(postulacion=…,
+      aceptada=…)` pero la función solo acepta `postulacion` → TypeError 500 al
+      aceptar/rechazar postulaciones.
+- [ ] `marcar_invitaciones_expiradas.py` y `admin.py:232`: usan `nombre_empresa`; el
+      campo real de `PerfilEmpleador` es `nombre_organizacion` → AttributeError.
+- [ ] `admin.py`: la acción "Reabrir ofertas" asigna estado `'abierta'`, que no existe
+      en los choices → las ofertas quedan invisibles para los listados.
+- [ ] Emails de postulaciones/invitaciones con URLs hardcodeadas `http://127.0.0.1:8000`.
+- [ ] `Testimonio.token_solicitud` sin `unique=True` (links de aprobación de referencias).
+
 ---
 
 ## 10. Validación: no lanzar y esperar
