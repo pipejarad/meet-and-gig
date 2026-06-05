@@ -29,7 +29,8 @@
 - **Invariantes:** OneToOne con `Usuario` (accessor `usuario.portafolio`);
   se auto-crea cuando el músico entra a su sección. `slug` único, generado del
   username al crear y **congelado** (la URL pública depende de él).
-  `activo=True` es requisito para aparecer en búsqueda y home.
+  `activo=True` es requisito para toda visibilidad pública: búsqueda, home y
+  el perfil público por username (el propietario sigue viendo lo suyo).
   `show_email`/`show_telefono` controlan el contacto visible al público
   (opt-in del músico).
 
