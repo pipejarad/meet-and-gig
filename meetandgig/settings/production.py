@@ -84,9 +84,10 @@ if env('AWS_STORAGE_BUCKET_NAME', default=''):  # noqa: F405
     AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')  # noqa: F405
     AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')  # noqa: F405
     AWS_S3_ENDPOINT_URL = env('AWS_S3_ENDPOINT_URL')  # noqa: F405
-    AWS_S3_REGION_NAME = 'auto'        # R2 usa 'auto'
+    # R2 usa 'auto'; Backblaze B2 usa la región del endpoint (ej: us-west-004)
+    AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME', default='auto')  # noqa: F405
     AWS_S3_FILE_OVERWRITE = False      # no pisar archivos con el mismo nombre
-    AWS_DEFAULT_ACL = None             # R2 no usa ACLs por objeto
+    AWS_DEFAULT_ACL = None             # R2/B2 no usan ACLs por objeto
 
 # --------------------------------------------------------------------------
 # Logging — a stdout, que Railway captura. Sin esto, los errores 500 en
