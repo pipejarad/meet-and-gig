@@ -370,6 +370,22 @@ para Postgres (migración 0019 portable; unicidad case-insensitive de email/user
 - [ ] Emails de postulaciones/invitaciones con URLs hardcodeadas `http://127.0.0.1:8000`.
 - [ ] `Testimonio.token_solicitud` sin `unique=True` (links de aprobación de referencias).
 
+**Inconsistencia de datos en catálogos (módulo ACTIVO) — pendiente (08-06-2026):**
+Hay dos sembradores de catálogos que **no coinciden entre sí**:
+- [ ] La migración de datos `0019` (corre en todo `migrate`, fresca o no) siembra **10
+      instrumentos** en 4 categorías (usa `Viento` en singular), **10 géneros**, 4 niveles
+      y **80 comunas**. El comando opcional `poblar_catalogos` siembra un set distinto:
+      **56 instrumentos** en 5 categorías (`Vientos` en plural + `Folclore Chileno`), **15
+      géneros** y solo **16 comunas**. Tras correr ambos quedan catálogos mezclados y
+      semánticamente duplicados (p. ej. `Guitarra` de la migración junto a `Guitarra
+      Clásica/Eléctrica/Acústica` del comando; categorías `Viento` y `Vientos` coexisten).
+- [ ] `poblar_catalogos.py` tiene `Charango` duplicado entre `Cuerdas` y `Percusión`
+      (inofensivo por `get_or_create`, pero queda en la categoría que corra primero).
+- [ ] Decisión pendiente: unificar en **una sola fuente de verdad** (idealmente la migración
+      de datos) y retirar o realinear el comando. No bloquea producción; afecta la calidad
+      del dato que ve el músico al elegir instrumentos/géneros. (Era la causa de los números
+      inflados —"63 instrumentos / 28 géneros"— que tenía el README viejo.)
+
 ---
 
 ## 10. Validación: no lanzar y esperar
