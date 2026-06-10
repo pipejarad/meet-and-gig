@@ -100,8 +100,9 @@ Genera borradores de biografía desde un formulario de preguntas predefinidas
 
 - PostgreSQL como add-on (inyecta `DATABASE_URL`; usar `dj-database-url`).
 - **Filesystem efímero:** los archivos subidos (media del portafolio) NO persisten entre
-  deploys. La media va a almacenamiento externo S3-compatible (Cloudflare R2) vía
-  `django-storages`. No asumas que el disco local guarda nada permanente.
+  deploys. La media va a almacenamiento externo S3-compatible (Backblaze B2; Cloudflare R2
+  como alternativa) vía `django-storages`, configurable por variables `AWS_*` +
+  `AWS_S3_REGION_NAME`. No asumas que el disco local guarda nada permanente.
 - Estáticos → **WhiteNoise** (no montar S3 para esto).
 - Gunicorn como servidor de aplicación. HTTPS lo da Railway en su subdominio.
 - `ANTHROPIC_API_KEY` (asistente de IA) es **opcional**: sin ella el asistente se

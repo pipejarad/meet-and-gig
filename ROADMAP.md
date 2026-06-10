@@ -344,9 +344,11 @@ para Postgres (migración 0019 portable; unicidad case-insensitive de email/user
       separado — los estáticos generados ahí se descartan).
 - [ ] Pendiente de credenciales del usuario: API key de Resend (Bloque 4 — OJO:
       sin dominio propio, Resend solo envía al correo del dueño de la cuenta;
-      comprar `meetandgig.cl` antes de invitar músicos reales), credenciales R2
-      (media persistente) y `ANTHROPIC_API_KEY` (opcional). Instalar la GitHub App
-      de Railway para auto-deploy en cada push (hoy se despliega con `railway up`).
+      comprar `meetandgig.cl` antes de invitar músicos reales), credenciales de
+      almacenamiento de media (Backblaze B2 — R2 quedó descartado por rechazo del
+      medio de pago en Cloudflare) y `ANTHROPIC_API_KEY` (opcional). Instalar la
+      GitHub App de Railway para auto-deploy en cada push (hoy se despliega con
+      `railway up`).
 
 **Mejoras medianas:** ✅ *Resueltas el 05-06-2026:*
 - [x] Límite de 25 megapíxeles en `validate_image_file` (anti decompression bomb) y
