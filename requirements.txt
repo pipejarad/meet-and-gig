@@ -15,6 +15,9 @@ django-environ==0.13.0
 toml==0.10.2
 typing_extensions==4.15.0
 
+# Seguridad — bloqueo de fuerza bruta en el login (auditoría A4)
+django-axes==8.3.1
+
 # Producción (Railway) — Bloques 2-5 del ROADMAP
 psycopg[binary]==3.2.9
 whitenoise==6.12.0

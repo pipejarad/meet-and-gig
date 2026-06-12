@@ -4,6 +4,27 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+def identificador_para_axes(request, credentials=None):
+    """Identificador con el que django-axes cuenta intentos fallidos (A4).
+
+    No basta el default de axes: busca la credencial bajo el USERNAME_FIELD
+    del modelo ('email'), pero el form de login la envía bajo 'username'
+    (que aquí puede ser email O username), así que axes registraba None y
+    el bloqueo por usuario+IP nunca coincidía. Se cubren ambas claves y se
+    normaliza a minúsculas para que 'Pedro@X.com' y 'pedro@x.com' cuenten
+    contra el mismo objetivo.
+    """
+    fuentes = [credentials or {}]
+    if request is not None:
+        fuentes.append(getattr(request, 'POST', None) or {})
+    for fuente in fuentes:
+        for clave in ('username', 'email'):
+            valor = fuente.get(clave)
+            if valor:
+                return str(valor).strip().lower()
+    return None
+
+
 class EmailBackend(ModelBackend):
     """
     Backend de autenticación personalizado que permite login con email.

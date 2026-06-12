@@ -12,7 +12,7 @@ hoy con `manage.py test usuarios` y seguir siendo válido cuando el Bloque D
 reconstruya la suite sobre pytest.
 """
 from django.contrib.auth import authenticate, get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from usuarios.forms import RegistroForm
 
@@ -40,6 +40,10 @@ def _crear_victima_y_atacante():
     return victima, atacante
 
 
+# AXES_ENABLED=False: estos tests son unitarios de EmailBackend y llaman
+# authenticate() sin request, que el backend de axes (A4) no acepta. El
+# bloqueo de fuerza bruta se cubre aparte en test_login_fuerza_bruta.py.
+@override_settings(AXES_ENABLED=False)
 class EmailBackendColisionTests(TestCase):
     """El backend debe resolver determinísticamente la colisión username/email."""
 
@@ -67,6 +71,7 @@ class EmailBackendColisionTests(TestCase):
         self.assertEqual(user, atacante)
 
 
+@override_settings(AXES_ENABLED=False)
 class EmailBackendBasicoTests(TestCase):
     """Comportamiento normal del backend, sin colisiones."""
 
