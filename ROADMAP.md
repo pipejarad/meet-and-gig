@@ -388,6 +388,38 @@ Hay dos sembradores de catálogos que **no coinciden entre sí**:
       del dato que ve el músico al elegir instrumentos/géneros. (Era la causa de los números
       inflados —"63 instrumentos / 28 géneros"— que tenía el README viejo.)
 
+### Auditoría externa del 11-06-2026 (`docs/auditoria-2026-06-11.md`)
+
+**Bloque A — Seguridad: ✅ resuelto el 11-06-2026** (rama `fix/auditoria-bloque-a`,
+un commit por hallazgo):
+- [x] **A1** Django 4.2.20 (EOL) → 5.2.15 LTS, con bumps de compatibilidad
+      (whitenoise 6.12, django-storages 1.14.6, django-environ 0.13). Postgres de
+      Railway verificado en versión 18 (≥14 exigido). Python local subido a 3.11
+      (venv recreado), igual que `runtime.txt`. Los `URLField` no cambian de
+      comportamiento en 5.2 (el default pasa a `https` recién en Django 6).
+- [x] **A2** Pillow → 12.2.0 (la 11.3 que pedía la auditoría acumulaba 7 CVEs más),
+      sqlparse → 0.5.5, pytz eliminado, autopep8/pycodestyle a requirements-dev,
+      `.github/dependabot.yml` creado. `pip-audit`: 0 vulnerabilidades conocidas.
+- [x] **A3** Bug de bloqueo de cuentas (MultipleObjectsReturned en `EmailBackend`):
+      búsqueda por email primero y username como fallback + `clean_username` rechaza
+      `@` y colisiones con emails. Con test de regresión.
+- [x] **A4** Login con django-axes (5 intentos → 1 h de bloqueo por usuario+IP, IP
+      real vía `_ip_del_request`, `AXES_USERNAME_CALLABLE` propio) y rate limit de
+      recuperación de contraseña (3/h por email, 5/h por IP, modelo
+      `SolicitudRecuperacionPassword`) preservando la anti-enumeración. De paso: un
+      fallo SMTP ya no produce 500 solo para cuentas existentes (oráculo de
+      enumeración).
+- [x] **A5** `_ip_del_request` toma el último elemento de X-Forwarded-For (el que
+      anexa el proxy de Railway) con validación de formato — el primero lo escribe
+      el cliente y permitía evadir los rate limits.
+- [x] Hallazgo lateral: `.gitignore` tenía `test_*.py` (regla de archivos temporales)
+      que ignoraba TODOS los tests — por eso la suite histórica nunca llegó al repo
+      (contexto de D1). Regla eliminada; hay 22 tests corriendo con
+      `manage.py test usuarios`.
+
+**Bloques B (legal), C (SEO) y D (tests e higiene): pendientes** — ver el documento
+de la auditoría.
+
 ---
 
 ## 10. Validación: no lanzar y esperar
