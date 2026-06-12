@@ -70,6 +70,11 @@ AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
 
 AXES_RESET_ON_SUCCESS = True
 
+# Sin esto (default True), cada reintento durante el bloqueo reinicia la
+# hora de espera y el "espera una hora" de la página de bloqueo sería falso
+# para cualquier usuario que insista.
+AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
+
 # El form de login envía la credencial como 'username' (email o username),
 # pero axes por defecto la busca bajo el USERNAME_FIELD del modelo ('email')
 # y registraría None. Ver usuarios.backends.identificador_para_axes.

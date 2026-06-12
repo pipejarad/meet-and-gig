@@ -99,7 +99,11 @@ def login_view(request):
             login(request, user)
             messages.success(request, f'¡Bienvenido de vuelta, {user.username}!')
             return _redirect_by_user_type(user)
-        else:
+        elif not getattr(request, 'axes_locked_out', False):
+            # Si axes bloqueó la request, el middleware reemplaza esta
+            # respuesta por la página 429: encolar aquí el error del form
+            # haría que el bloqueo acuse "contraseña incorrecta" aunque la
+            # contraseña enviada fuera la correcta.
             messages.error(request, 'Email o contraseña incorrectos.')
     else:
         form = LoginForm()

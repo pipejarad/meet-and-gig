@@ -61,6 +61,32 @@ class LoginFuerzaBrutaTests(TestCase):
         )
         self.assertEqual(respuesta.status_code, 429)
 
+    def test_la_pagina_de_bloqueo_no_acusa_credenciales_incorrectas(self):
+        # El mensaje de error del form se encolaba antes de que el middleware
+        # de axes cambiara la respuesta por el 429: la página de bloqueo decía
+        # "Email o contraseña incorrectos" incluso con la contraseña correcta.
+        for _ in range(5):
+            self._intento_fallido()
+
+        respuesta = self.client.post(
+            self.url, {'username': 'musico@example.com', 'password': PASSWORD_OK}
+        )
+        self.assertEqual(respuesta.status_code, 429)
+        self.assertNotIn('Email o contraseña incorrectos', respuesta.content.decode())
+
+    def test_reintentar_durante_el_bloqueo_no_reinicia_la_espera(self):
+        # El default de axes reinicia el cooloff con cada reintento durante el
+        # bloqueo: el "espera una hora" del template nunca se cumpliría para
+        # un usuario que insiste.
+        from axes.models import AccessAttempt
+
+        for _ in range(5):
+            self._intento_fallido()
+        marca_original = AccessAttempt.objects.get().attempt_time
+
+        self._intento_fallido()
+        self.assertEqual(AccessAttempt.objects.get().attempt_time, marca_original)
+
     def test_menos_intentos_que_el_limite_no_bloquea(self):
         for _ in range(3):
             self._intento_fallido()
