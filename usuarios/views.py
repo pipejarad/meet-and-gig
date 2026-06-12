@@ -1,3 +1,4 @@
+import ipaddress
 import logging
 from datetime import timedelta
 
@@ -2306,10 +2307,29 @@ LIMITE_CONTACTOS_POR_IP_HORA = 5
 
 
 def _ip_del_request(request):
-    """IP real del visitante, considerando el proxy de Railway."""
+    """IP real del visitante detrás del proxy de Railway.
+
+    Alimenta los rate limits de contacto, recuperación de contraseña y login
+    (django-axes vía AXES_CLIENT_IP_CALLABLE).
+
+    OJO: se toma el ÚLTIMO elemento de X-Forwarded-For a propósito, NO el
+    primero (auditoría A5). El cliente puede mandar el header con cualquier
+    contenido — tomar el primero permite falsificar la IP y evadir los
+    límites — mientras que el último lo anexa el proxy de Railway con la IP
+    de la conexión real. Esto asume EXACTAMENTE un proxy confiable delante
+    (Railway); si algún día se agrega otro (p. ej. Cloudflare), habrá que
+    revisar esta función. No lo "corrijas" de vuelta a [0].
+    """
     xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
     if xff:
-        return xff.split(',')[0].strip()
+        candidata = xff.rsplit(',', 1)[-1].strip()
+        try:
+            ipaddress.ip_address(candidata)
+            return candidata
+        except ValueError:
+            # Valor malformado: ContactoMusico.ip_remitente (campo inet)
+            # fallaría al guardar. REMOTE_ADDR siempre existe bajo gunicorn.
+            pass
     return request.META.get('REMOTE_ADDR')
 
 
