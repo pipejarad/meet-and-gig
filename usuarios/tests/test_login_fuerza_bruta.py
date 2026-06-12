@@ -48,6 +48,19 @@ class LoginFuerzaBrutaTests(TestCase):
         )
         self.assertEqual(respuesta.status_code, 429)
 
+    def test_email_y_username_comparten_el_contador_de_bloqueo(self):
+        # EmailBackend acepta email O username para la misma cuenta: si axes
+        # contara cada cadena por separado, el atacante tendría el doble de
+        # intentos (revisión adversarial del Bloque A). 4 fallos con el email
+        # + 1 con el username deben caer en el MISMO cubo → bloqueo.
+        for _ in range(4):
+            self._intento_fallido()
+
+        respuesta = self.client.post(
+            self.url, {'username': 'musico', 'password': 'clave-mala-1'}
+        )
+        self.assertEqual(respuesta.status_code, 429)
+
     def test_menos_intentos_que_el_limite_no_bloquea(self):
         for _ in range(3):
             self._intento_fallido()

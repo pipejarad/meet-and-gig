@@ -13,6 +13,13 @@ def identificador_para_axes(request, credentials=None):
     el bloqueo por usuario+IP nunca coincidía. Se cubren ambas claves y se
     normaliza a minúsculas para que 'Pedro@X.com' y 'pedro@x.com' cuenten
     contra el mismo objetivo.
+
+    Además, si el identificador corresponde a una cuenta existente se
+    devuelve su email canónico: EmailBackend acepta email O username para la
+    misma cuenta, y si axes contara cada cadena por separado un atacante
+    tendría el doble de intentos contra la cuenta (2 cubos de 5). La
+    resolución usa la MISMA prioridad que EmailBackend (email primero) para
+    que el cubo bloqueado sea siempre el de la cuenta realmente atacada.
     """
     fuentes = [credentials or {}]
     if request is not None:
@@ -21,7 +28,14 @@ def identificador_para_axes(request, credentials=None):
         for clave in ('username', 'email'):
             valor = fuente.get(clave)
             if valor:
-                return str(valor).strip().lower()
+                valor = str(valor).strip().lower()
+                usuario = (
+                    User.objects.filter(email__iexact=valor).order_by('pk').first()
+                    or User.objects.filter(username__iexact=valor).order_by('pk').first()
+                )
+                if usuario:
+                    return usuario.email.lower()
+                return valor
     return None
 
 
