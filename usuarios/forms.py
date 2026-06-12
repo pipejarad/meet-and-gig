@@ -119,9 +119,21 @@ class RegistroForm(UserCreationForm):
         username = self.cleaned_data.get('username')
         if not username:
             return username
-            
+
+        # Un username con '@' puede hacerse pasar por el email de otra cuenta
+        # y bloquearle el login (hallazgo A3): el backend de autenticación
+        # busca por ambos campos.
+        if '@' in username:
+            raise ValidationError("El nombre de usuario no puede contener '@'.")
+
         if Usuario.objects.filter(username__iexact=username).exists():
             raise ValidationError("Este nombre de usuario ya está en uso.")
+
+        # Defensa en profundidad por si la regla del '@' se relajara: nunca
+        # permitir un username que coincida con un email ya registrado.
+        if Usuario.objects.filter(email__iexact=username).exists():
+            raise ValidationError("Este nombre de usuario no está disponible.")
+
         return username
 
     def save(self, commit=True):

@@ -58,7 +58,6 @@ db.sqlite3-journal
 *_temp.html
 *_nuevo.html
 *_migration.py
-test_*.py
 check_*.py
 migrate_*.py
 populate_*.py
