@@ -62,6 +62,22 @@
   de hoy en la vista; el borrador elegido viaja por sesión y **nunca** se
   escribe directo en `Portafolio.biografia`.
 
+### `SolicitudRecuperacionPassword`
+- **Para qué:** rate limit de la recuperación de contraseña (auditoría A4):
+  3/hora por email destino y 5/hora por IP, contando filas en BD (mismo
+  patrón que `ContactoMusico`).
+- **Invariantes:** se crea una fila por CADA solicitud, exista o no la cuenta
+  (registrar solo cuentas reales delataría qué emails existen). Al exceder el
+  límite la respuesta no cambia: se degrada en silencio (sin email). Las
+  filas pierden utilidad pasada la ventana de 1 hora; limpieza pendiente de
+  sumarse al command de retención del Bloque B (B4).
+
+### Tablas de terceros: `axes_*` (django-axes, auditoría A4)
+- Bloqueo de fuerza bruta del login: 5 intentos fallidos por usuario+IP →
+  1 hora de bloqueo. Las gestiona django-axes con sus propias migraciones
+  (`AccessAttempt`, `AccessLog`, `AccessFailureLog`); config en
+  `settings/base.py` (bloque AXES_*).
+
 ## Modelos DIFERIDOS (presentes en el código — no construir sobre ellos, no borrar)
 
 > Diferidos por el pivote a vitrina de un solo lado. Modelos y migraciones

@@ -25,7 +25,7 @@ from .forms import (
     PostulacionForm, SolicitudReferenciaForm, ResponderReferenciaForm, TestimonioDirectoForm,
     ContactoMusicoForm, AsistenteBioForm
 )
-from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLaboral, Postulacion, Notificacion, Invitacion, Testimonio, ContactoMusico, GeneracionBioIA
+from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLaboral, Postulacion, Notificacion, Invitacion, Testimonio, ContactoMusico, GeneracionBioIA, SolicitudRecuperacionPassword
 from .services import bio_ia
 
 
@@ -127,21 +127,48 @@ def _redirect_by_user_type(user):
         return redirect('inicio')  # Temporal hasta crear perfil_empleador_crear
 
 
+# Rate limit de recuperación de contraseña (auditoría A4): impide email
+# bombing hacia una cuenta y el abuso en volumen desde una misma IP.
+LIMITE_RECUPERACIONES_POR_EMAIL_HORA = 3
+LIMITE_RECUPERACIONES_POR_IP_HORA = 5
+
+logger_auth = logging.getLogger('usuarios.auth')
+
+
 def recuperar_password_view(request):
     if request.user.is_authenticated:
         return redirect('inicio')
-        
+
     if request.method == 'POST':
         form = RecuperarPasswordForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
-            try:
-                user = Usuario.objects.get(email__iexact=email)
-                _send_password_reset_email(request, user)
-            except Usuario.DoesNotExist:
-                # Respuesta idéntica exista o no la cuenta, para no revelar
-                # qué emails están registrados (enumeración de usuarios).
-                pass
+
+            # El límite se evalúa ANTES de consultar si la cuenta existe y la
+            # solicitud se registra SIEMPRE: si dependiera de la existencia
+            # del usuario, el comportamiento delataría qué emails están
+            # registrados (anti-enumeración). Al exceder el límite se degrada
+            # en silencio: mismo mensaje de éxito, sin enviar email.
+            ip = _ip_del_request(request)
+            hace_una_hora = timezone.now() - timedelta(hours=1)
+            excedido = (
+                SolicitudRecuperacionPassword.objects.filter(
+                    email__iexact=email, creado__gte=hace_una_hora
+                ).count() >= LIMITE_RECUPERACIONES_POR_EMAIL_HORA
+                or (ip and SolicitudRecuperacionPassword.objects.filter(
+                    ip=ip, creado__gte=hace_una_hora
+                ).count() >= LIMITE_RECUPERACIONES_POR_IP_HORA)
+            )
+            SolicitudRecuperacionPassword.objects.create(email=email, ip=ip)
+
+            if not excedido:
+                try:
+                    user = Usuario.objects.get(email__iexact=email)
+                    _send_password_reset_email(request, user)
+                except Usuario.DoesNotExist:
+                    # Respuesta idéntica exista o no la cuenta, para no revelar
+                    # qué emails están registrados (enumeración de usuarios).
+                    pass
             messages.success(
                 request,
                 'Si el email está registrado, te enviamos un enlace de recuperación. '
@@ -214,13 +241,20 @@ Saludos,
 El equipo de Meet & Gig
 """
     
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    # Sin el try/except, un fallo del SMTP producía un 500 SOLO para cuentas
+    # existentes: un oráculo de enumeración además del error visible (A4).
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+    except Exception:
+        logger_auth.exception(
+            'Error enviando email de recuperación de contraseña (user id=%s)', user.pk
+        )
 
 
 @login_required
