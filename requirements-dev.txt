@@ -15,6 +15,8 @@ coverage==7.3.2
 django-debug-toolbar==4.2.0
 
 # Formateo de código
+autopep8==1.5.7
+pycodestyle==2.7.0
 black==23.7.0
 flake8==6.0.0
 
