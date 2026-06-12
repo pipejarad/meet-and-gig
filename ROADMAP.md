@@ -418,7 +418,15 @@ un commit por hallazgo):
       `manage.py test usuarios`.
 
 **Bloques B (legal), C (SEO) y D (tests e higiene): pendientes** — ver el documento
-de la auditoría.
+de la auditoría. Notas para D1 que dejó el Bloque A:
+- `pytest.ini` filtra `RemovedInDjango50Warning`, clase que NO existe en Django 5.x
+  (rompería la suite pytest al reconstruirla), y `pytest-django==4.7.0` no declara
+  soporte de Django 5.2 (subir a ≥4.10). Se difirió a propósito: D1 reescribe ese
+  andamiaje.
+- Con axes activo, `authenticate()` o `Client.login()` SIN `request` lanzan
+  `AxesBackendRequestParameterRequired`: en tests usar `client.post` al login,
+  pasar el request, o `@override_settings(AXES_ENABLED=False)` (patrón ya usado
+  en `usuarios/tests/test_backends.py`).
 
 ---
 
