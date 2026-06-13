@@ -601,29 +601,22 @@ def editar_portafolio_musico(request):
 
 
 def ver_perfil_musico(request, username):
-    """Vista pública del perfil de un músico"""
+    """Redirección permanente al portafolio (auditoría C3).
+
+    /perfil/<username>/ y /portafolio/<slug>/ eran dos páginas públicas para
+    el mismo músico y dividían el SEO; la canónica es el portafolio. El 301
+    conserva los links externos que ya apunten al perfil. Sin portafolio
+    activo, 404 como antes (el dueño sí es redirigido: ve su portafolio
+    despublicado como vista previa).
+    """
     usuario = get_object_or_404(Usuario, username=username, tipo_usuario='musico')
 
-    try:
-        perfil = usuario.perfil_musico
-    except PerfilMusico.DoesNotExist:
-        raise Http404("Este músico no tiene un perfil disponible.")
-
     es_mi_perfil = request.user.is_authenticated and request.user == usuario
-
-    # Un portafolio despublicado (activo=False) oculta también el perfil
-    # público (igual que en búsqueda y home), salvo para el propio músico.
     portafolio = getattr(usuario, 'portafolio', None)
-    if portafolio and not portafolio.activo and not es_mi_perfil:
+    if portafolio is None or (not portafolio.activo and not es_mi_perfil):
         raise Http404("Este músico no tiene un perfil disponible.")
 
-    context = {
-        'perfil': perfil,
-        'usuario': usuario,
-        'es_mi_perfil': es_mi_perfil,
-        'titulo': f'Perfil de {usuario.get_full_name() or usuario.username}'
-    }
-    return render(request, 'usuarios/ver_perfil_musico.html', context)
+    return redirect('ver_portafolio', slug=portafolio.slug, permanent=True)
 
 
 def buscar_portafolios(request):
