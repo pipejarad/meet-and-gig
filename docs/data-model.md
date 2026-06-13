@@ -17,6 +17,12 @@
   `UsuarioManager` normaliza el email a minúsculas en toda vía de creación.
   En v1 todo registro nuevo queda con `tipo_usuario='musico'` (forzado
   server-side en `RegistroForm.save()`).
+  `terminos_aceptados_en` (B2) acredita el consentimiento: lo sella
+  `RegistroForm.save()`; nullable porque las cuentas previas no lo tienen.
+  La **eliminación de cuenta** (B3) es soft-delete con anonimización:
+  `is_active=False`, email/username → `eliminado-<pk>…` (libera el email
+  real para re-registro), nombre/teléfono/dirección/foto borrados y
+  portafolio despublicado. La fila nunca se borra (integridad referencial).
 
 ### `PerfilMusico`
 - **Para qué:** datos personales/privados del músico (teléfono, privacidad).
@@ -50,7 +56,9 @@
   **nullable** — la bisagra para cuentas de contratista en v2. Embudo `estado`:
   ENVIADO→VISTO ocurre automático al abrir "Mis contactos" (sella `visto_en`);
   RESPONDIDO/CONVERTIDO los marca el músico a mano — **nunca automatizar
-  `convertido`**. `ip_remitente` alimenta el límite anti-spam (5/hora por IP).
+  `convertido`**. `ip_remitente` alimenta el límite anti-spam (5/hora por IP)
+  y se **anonimiza a los 30 días** (command `aplicar_retencion_datos`, B4 —
+  plazo documentado en /privacidad/); el contenido del contacto no se toca.
   El email del músico jamás se renderiza en el HTML público; el aviso por email
   respeta `recibir_notificaciones_email` y lleva Reply-To del visitante.
 
@@ -69,8 +77,8 @@
 - **Invariantes:** se crea una fila por CADA solicitud, exista o no la cuenta
   (registrar solo cuentas reales delataría qué emails existen). Al exceder el
   límite la respuesta no cambia: se degrada en silencio (sin email). Las
-  filas pierden utilidad pasada la ventana de 1 hora; limpieza pendiente de
-  sumarse al command de retención del Bloque B (B4).
+  filas pierden utilidad pasada la ventana de 1 hora; el command
+  `aplicar_retencion_datos` (B4) las elimina a los 30 días.
 
 ### Tablas de terceros: `axes_*` (django-axes, auditoría A4)
 - Bloqueo de fuerza bruta del login: 5 intentos fallidos por usuario+IP →
