@@ -15,6 +15,7 @@ urlpatterns = [
     path("cambiar-password/<uidb64>/<token>/", views.cambiar_password_view, name="cambiar_password"),
     path("perfil/musico/editar/", views.editar_perfil_musico, name="editar_perfil_musico"),
     path("perfil/musico/", views.ver_mi_perfil, name="ver_mi_perfil"),
+    path("cuenta/eliminar/", views.eliminar_cuenta_view, name="eliminar_cuenta"),
     # === DIFERIDO v1 (pivote a vitrina) — perfil de empleador ===
     # Reactivar descomentando. Ver CLAUDE.md (SCOPE v1).
     # path('perfil-empleador/', views.perfil_empleador_view, name='perfil_empleador'),

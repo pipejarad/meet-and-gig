@@ -263,6 +263,49 @@ El equipo de Meet & Gig
 
 
 @login_required
+def eliminar_cuenta_view(request):
+    """Eliminación de cuenta (auditoría B3, Ley 21.719).
+
+    Soft-delete: la fila Usuario se conserva (integridad referencial de
+    contactos y métricas) pero el dato personal queda irreconocible:
+    is_active=False, email/username → placeholders únicos por pk, nombre,
+    teléfono, dirección y foto borrados, y portafolio despublicado. El
+    placeholder libera el email real para un eventual re-registro.
+    """
+    if request.method != 'POST':
+        return render(request, 'usuarios/eliminar_cuenta.html')
+
+    usuario = request.user
+    with transaction.atomic():
+        Portafolio.objects.filter(usuario=usuario).update(activo=False)
+
+        try:
+            perfil = usuario.perfil_musico
+        except PerfilMusico.DoesNotExist:
+            perfil = None
+        if perfil is not None:
+            perfil.telefono = ''
+            perfil.direccion = ''
+            perfil.fecha_nacimiento = None
+            perfil.save()
+
+        if usuario.foto_perfil:
+            usuario.foto_perfil.delete(save=False)
+
+        usuario.first_name = ''
+        usuario.last_name = ''
+        usuario.email = f'eliminado-{usuario.pk}@cuenta-eliminada.invalid'
+        usuario.username = f'eliminado-{usuario.pk}'
+        usuario.set_unusable_password()
+        usuario.is_active = False
+        usuario.save()
+
+    logout(request)
+    messages.info(request, 'Tu cuenta fue eliminada. Gracias por haber sido parte de Meet & Gig.')
+    return redirect('inicio')
+
+
+@login_required
 def editar_perfil_musico(request):
     if request.user.tipo_usuario != 'musico':
         messages.error(request, 'Solo los músicos pueden acceder a esta sección.')
@@ -713,6 +756,19 @@ class PortafolioUnificadoView(DetailView):
             'portafolio_instrumentos__instrumento',
             'portafolio_generos__genero',
         )
+
+    def get_object(self, queryset=None):
+        # Un portafolio despublicado (activo=False) no existe para el público
+        # — si esto no se aplica, despublicar y eliminar la cuenta (B3) no
+        # tendrían efecto. El dueño sí lo ve, como vista previa.
+        portafolio = super().get_object(queryset)
+        es_propietario = (
+            self.request.user.is_authenticated
+            and self.request.user == portafolio.usuario
+        )
+        if not portafolio.activo and not es_propietario:
+            raise Http404('Este portafolio no está disponible.')
+        return portafolio
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
