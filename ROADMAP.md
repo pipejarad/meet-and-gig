@@ -372,21 +372,12 @@ para Postgres (migración 0019 portable; unicidad case-insensitive de email/user
 - [ ] Emails de postulaciones/invitaciones con URLs hardcodeadas `http://127.0.0.1:8000`.
 - [ ] `Testimonio.token_solicitud` sin `unique=True` (links de aprobación de referencias).
 
-**Inconsistencia de datos en catálogos (módulo ACTIVO) — pendiente (08-06-2026):**
-Hay dos sembradores de catálogos que **no coinciden entre sí**:
-- [ ] La migración de datos `0019` (corre en todo `migrate`, fresca o no) siembra **10
-      instrumentos** en 4 categorías (usa `Viento` en singular), **10 géneros**, 4 niveles
-      y **80 comunas**. El comando opcional `poblar_catalogos` siembra un set distinto:
-      **56 instrumentos** en 5 categorías (`Vientos` en plural + `Folclore Chileno`), **15
-      géneros** y solo **16 comunas**. Tras correr ambos quedan catálogos mezclados y
-      semánticamente duplicados (p. ej. `Guitarra` de la migración junto a `Guitarra
-      Clásica/Eléctrica/Acústica` del comando; categorías `Viento` y `Vientos` coexisten).
-- [ ] `poblar_catalogos.py` tiene `Charango` duplicado entre `Cuerdas` y `Percusión`
-      (inofensivo por `get_or_create`, pero queda en la categoría que corra primero).
-- [ ] Decisión pendiente: unificar en **una sola fuente de verdad** (idealmente la migración
-      de datos) y retirar o realinear el comando. No bloquea producción; afecta la calidad
-      del dato que ve el músico al elegir instrumentos/géneros. (Era la causa de los números
-      inflados —"63 instrumentos / 28 géneros"— que tenía el README viejo.)
+**Inconsistencia de datos en catálogos (módulo ACTIVO) — ✅ resuelto el 13-06-2026 (D2):**
+Había dos sembradores divergentes (la migración `0019` y el comando `poblar_catalogos`):
+categorías `Viento`/`Vientos`, géneros `Electronic`/`Electrónica`, `Charango` duplicado y
+genéricos junto a sus desgloses. La migración de datos `0030` consolidó el catálogo rico
+chileno como **única fuente de verdad** y normalizó lo ya sembrado en prod; el comando
+`poblar_catalogos` se eliminó. Detalle en el Bloque D más abajo.
 
 ### Auditoría externa del 11-06-2026 (`docs/auditoria-2026-06-11.md`)
 
@@ -455,16 +446,24 @@ un commit por hallazgo):
 - [x] **C5** El home oculta el bloque de estadísticas bajo 50 músicos (constante
       `UMBRAL_MUSICOS_PARA_ESTADISTICAS`): números bajos son social proof inversa.
 
-**Bloque D (tests e higiene): pendiente** — ver el documento de la auditoría.
-Notas para D1 que dejó el Bloque A:
-- `pytest.ini` filtra `RemovedInDjango50Warning`, clase que NO existe en Django 5.x
-  (rompería la suite pytest al reconstruirla), y `pytest-django==4.7.0` no declara
-  soporte de Django 5.2 (subir a ≥4.10). Se difirió a propósito: D1 reescribe ese
-  andamiaje.
-- Con axes activo, `authenticate()` o `Client.login()` SIN `request` lanzan
-  `AxesBackendRequestParameterRequired`: en tests usar `client.post` al login,
-  pasar el request, o `@override_settings(AXES_ENABLED=False)` (patrón ya usado
-  en `usuarios/tests/test_backends.py`).
+**Bloque D — Tests e higiene: ✅ resuelto el 13-06-2026:**
+- [x] **D1** Borrado el andamiaje de tests muerto (`conftest.py` con fixtures de
+      campos extintos, `tests/` raíz con factories rotas, `REORGANIZACION_FINAL.md`,
+      `settings.py.bak`). `pytest.ini` reescrito (settings.development, sin el
+      filterwarnings roto, sin `--nomigrations`) y `pytest`/`pytest-django` subidos
+      para Django 5.2. Suite de humo del embudo de contacto (12 tests) que faltaba;
+      registro→login→portafolio ya estaban cubiertos por A/B/C. **80 tests verdes**
+      (pytest y `manage.py test`).
+- [x] **D2** Borrado `mis_postulaciones_debug.html` (template huérfano) y
+      `scripts/debug/` (scripts ad-hoc). Catálogos unificados en la migración `0030`
+      (ver arriba); comando `poblar_catalogos` eliminado.
+
+**Auditoría 11-06-2026 completa: A + B + C + D resueltos.** Quedan acciones del
+usuario (no son de código): activar Dependabot, backups de Postgres, cron de
+retención (`aplicar_retencion_datos`), credenciales (B2/Resend/Anthropic), dominio
++ SPF/DKIM/DMARC, revisión legal de los borradores + completar sus `[PENDIENTE]`, y
+(opcional) Sentry. Bug menor abierto: colisión del slug de portafolio con rutas
+reservadas (`portafolio/musico/`, etc.) — reservar esos nombres al generar el slug.
 
 ---
 
