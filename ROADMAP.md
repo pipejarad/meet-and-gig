@@ -417,7 +417,30 @@ un commit por hallazgo):
       (contexto de D1). Regla eliminada; hay 22 tests corriendo con
       `manage.py test usuarios`.
 
-**Bloques B (legal), C (SEO) y D (tests e higiene): pendientes** — ver el documento
+**Bloque B — Cumplimiento legal (Ley 21.719): ✅ resuelto el 12-06-2026:**
+- [x] **B1** Páginas /terminos/ y /privacidad/ (borradores marcados PENDIENTE DE
+      REVISIÓN LEGAL), footer nuevo en base.html con ambos links.
+- [x] **B2** Checkbox de consentimiento obligatorio en el registro (con links) +
+      `Usuario.terminos_aceptados_en` (migración 0029).
+- [x] **B3** Vista `eliminar_cuenta` (POST con confirmación, en el dropdown):
+      soft-delete con anonimización inmediata + portafolio despublicado. De paso se
+      arregló que `PortafolioUnificadoView` ignoraba `activo` y servía portafolios
+      despublicados al público (ahora 404; el dueño lo ve como vista previa).
+- [x] **B4** Command `aplicar_retencion_datos` (--dry-run disponible): anonimiza
+      `ip_remitente` de contactos a los 30 días y borra solicitudes de recuperación
+      antiguas. **Acción del usuario:** crear el cron en Railway (servicio con
+      Cron Schedule diario, ej. `0 5 * * *`, comando
+      `python manage.py aplicar_retencion_datos`).
+- **Acciones del usuario que deja el bloque:** pasar los borradores legales por
+  abogado y completar los `[PENDIENTE]` (responsable del tratamiento y email de
+  contacto para derechos ARCO).
+- Bug encontrado (pendiente, módulo activo): el slug del portafolio deriva del
+  username y puede **chocar con rutas reservadas** (`portafolio/musico/`,
+  `portafolio/asistente-bio/`): un usuario llamado `musico` tendría su URL pública
+  inalcanzable (la captura la vista privada). Reservar esos nombres al generar el
+  slug o validar el username.
+
+**Bloques C (SEO) y D (tests e higiene): pendientes** — ver el documento
 de la auditoría. Notas para D1 que dejó el Bloque A:
 - `pytest.ini` filtra `RemovedInDjango50Warning`, clase que NO existe en Django 5.x
   (rompería la suite pytest al reconstruirla), y `pytest-django==4.7.0` no declara
