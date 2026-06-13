@@ -440,8 +440,23 @@ un commit por hallazgo):
   inalcanzable (la captura la vista privada). Reservar esos nombres al generar el
   slug o validar el username.
 
-**Bloques C (SEO) y D (tests e higiene): pendientes** — ver el documento
-de la auditoría. Notas para D1 que dejó el Bloque A:
+**Bloque C — SEO y vitrina: ✅ resuelto el 13-06-2026:**
+- [x] **C1** JSON-LD del portafolio construido y serializado en
+      `PortafolioUnificadoView` (antes el autoescape del template corrompía las
+      URLs de `sameAs` con `&amp;` y emitía `address` "None").
+- [x] **C2** Embed de YouTube robusto vía filtro `usuarios.templatetags.videos
+      .youtube_id` (valida dominio + ID de 11 chars; cae a link plano si no aplica).
+      Reemplaza el `slice` posicional que solo servía a dos formatos de URL.
+- [x] **C3** `/perfil/<username>/` ahora redirige 301 al portafolio canónico (era
+      contenido duplicado que dividía el SEO). Sin portafolio activo → 404.
+- [x] **C4** `sitemap.xml` (home + directorio + portafolios activos con `lastmod`)
+      y `robots.txt` (bloquea `/admin/`, `/mis-contactos/`, `/cuenta/` y rutas
+      privadas; apunta al sitemap). Nueva app `django.contrib.sitemaps`.
+- [x] **C5** El home oculta el bloque de estadísticas bajo 50 músicos (constante
+      `UMBRAL_MUSICOS_PARA_ESTADISTICAS`): números bajos son social proof inversa.
+
+**Bloque D (tests e higiene): pendiente** — ver el documento de la auditoría.
+Notas para D1 que dejó el Bloque A:
 - `pytest.ini` filtra `RemovedInDjango50Warning`, clase que NO existe en Django 5.x
   (rompería la suite pytest al reconstruirla), y `pytest-django==4.7.0` no declara
   soporte de Django 5.2 (subir a ≥4.10). Se difirió a propósito: D1 reescribe ese
