@@ -121,6 +121,7 @@ class RegistroFormUsernameTests(TestCase):
             'email': 'nuevo@example.com',
             'password1': 'clave-segura-nueva-7',
             'password2': 'clave-segura-nueva-7',
+            'acepta_terminos': 'on',  # consentimiento obligatorio (B2)
         })
 
     def test_username_con_arroba_es_rechazado(self):

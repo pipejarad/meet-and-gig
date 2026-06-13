@@ -102,6 +102,17 @@ class RegistroForm(UserCreationForm):
         })
     )
 
+    # Consentimiento explícito (auditoría B2). El timestamp se guarda en
+    # Usuario.terminos_aceptados_en al registrarse.
+    acepta_terminos = forms.BooleanField(
+        label='He leído y acepto los Términos de servicio y la Política de Privacidad',
+        required=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        error_messages={
+            'required': 'Debes aceptar los Términos y la Política de Privacidad para registrarte.',
+        }
+    )
+
     class Meta:
         model = Usuario
         fields = ['username', 'email', 'tipo_usuario', 'foto_perfil', 'password1', 'password2']
@@ -140,6 +151,7 @@ class RegistroForm(UserCreationForm):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email'].lower()
         user.tipo_usuario = 'musico'  # DIFERIDO v1: solo se registran músicos
+        user.terminos_aceptados_en = timezone.now()  # consentimiento (B2)
         if commit:
             user.save()
         return user

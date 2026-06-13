@@ -39,6 +39,13 @@ class Usuario(AbstractUser):
         blank=True,
         verbose_name='Foto de perfil'
     )
+    # Acreditación del consentimiento (Ley 21.719, auditoría B2): momento en
+    # que el usuario aceptó los Términos y la Política de Privacidad.
+    terminos_aceptados_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Términos aceptados en'
+    )
 
     objects = UsuarioManager()
 
