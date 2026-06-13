@@ -32,6 +32,12 @@ from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLa
 from .services import bio_ia
 
 
+# Social proof inversa (auditoría C5): mostrar "3 Músicos Registrados"
+# comunica lo contrario de lo que se busca. Bajo este umbral, el home
+# oculta el bloque de estadísticas.
+UMBRAL_MUSICOS_PARA_ESTADISTICAS = 50
+
+
 def inicio(request):
     portafolios_destacados = Portafolio.objects.filter(
         activo=True,
@@ -40,7 +46,7 @@ def inicio(request):
         'portafolio_instrumentos__instrumento',
         'portafolio_generos__genero'
     ).order_by('-fecha_actualizacion')[:6]
-    
+
     stats = {
         'total_musicos': Usuario.objects.filter(tipo_usuario='musico').count(),
         'total_empleadores': Usuario.objects.filter(tipo_usuario='empleador').count(),
@@ -48,12 +54,13 @@ def inicio(request):
         'total_ofertas': OfertaLaboral.objects.filter(estado='publicada').count(),
         'total_usuarios': Usuario.objects.count(),
     }
-    
+
     context = {
         'portafolios_destacados': portafolios_destacados,
         'stats': stats,
+        'mostrar_estadisticas': stats['total_musicos'] >= UMBRAL_MUSICOS_PARA_ESTADISTICAS,
     }
-    
+
     return render(request, 'usuarios/inicio.html', context)
 
 
