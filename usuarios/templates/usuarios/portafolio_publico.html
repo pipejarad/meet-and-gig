@@ -28,30 +28,9 @@
     <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ portafolio.usuario.foto_perfil.url }}">
     {% endif %}
     
-    <!-- Schema.org JSON-LD -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "{{ portafolio.usuario.get_full_name|escapejs }}",
-        "description": "{{ seo_description|escapejs }}",
-        {% if portafolio.usuario.foto_perfil %}
-        "image": "{{ request.scheme }}://{{ request.get_host }}{{ portafolio.usuario.foto_perfil.url }}",
-        {% endif %}
-        "jobTitle": "Músico",
-        "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "{{ portafolio.ubicacion|escapejs }}"
-        }
-        {% if portafolio.youtube_url or portafolio.spotify_url or portafolio.instagram_url %}
-        ,"sameAs": [
-            {% if portafolio.youtube_url %}"{{ portafolio.youtube_url }}"{% endif %}
-            {% if portafolio.spotify_url %}{% if portafolio.youtube_url %},{% endif %}"{{ portafolio.spotify_url }}"{% endif %}
-            {% if portafolio.instagram_url %}{% if portafolio.youtube_url or portafolio.spotify_url %},{% endif %}"{{ portafolio.instagram_url }}"{% endif %}
-        ]
-        {% endif %}
-    }
-    </script>
+    <!-- Schema.org JSON-LD: NO construir a mano aquí — el autoescape corrompe
+         las URLs (&amp;). Se serializa completo en la vista (auditoría C1). -->
+    <script type="application/ld+json">{{ json_ld }}</script>
 {% endblock %}
 
 {% block extra_css %}

@@ -1,4 +1,5 @@
 import ipaddress
+import json
 import logging
 from datetime import timedelta
 
@@ -20,6 +21,7 @@ from django.views.generic import CreateView, UpdateView, DetailView
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from .forms import (
     RegistroForm, LoginForm, RecuperarPasswordForm, CambiarPasswordForm,
     PerfilMusicoForm, PerfilEmpleadorForm, PortafolioForm, CrearOfertaLaboralForm,
@@ -793,7 +795,46 @@ class PortafolioUnificadoView(DetailView):
         context['seo_description'] = biografia_truncada
         context['seo_keywords'] = self._generate_keywords(portafolio)
         context['canonical_url'] = self.request.build_absolute_uri()
-        
+
+        # JSON-LD construido aquí y serializado UNA vez (auditoría C1): si el
+        # template interpola campo a campo, el autoescape convierte los & de
+        # las URLs en &amp; y Google descarta el structured data.
+        json_ld = {
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            'name': nombre_completo,
+            'description': context['seo_description'],
+            'url': context['canonical_url'],
+            'jobTitle': 'Músico',
+        }
+        if portafolio.usuario.foto_perfil:
+            json_ld['image'] = self.request.build_absolute_uri(
+                portafolio.usuario.foto_perfil.url
+            )
+        if portafolio.ubicacion:
+            json_ld['address'] = {
+                '@type': 'PostalAddress',
+                'addressLocality': str(portafolio.ubicacion),
+            }
+        same_as = [
+            url for url in (
+                portafolio.website_personal,
+                portafolio.soundcloud_url,
+                portafolio.youtube_url,
+                portafolio.spotify_url,
+                portafolio.instagram_url,
+                portafolio.facebook_url,
+            ) if url
+        ]
+        if same_as:
+            json_ld['sameAs'] = same_as
+        # < impide cerrar el <script> desde un dato (mismo escape que
+        # aplica el filtro json_script, que aquí no sirve porque fija el
+        # type="application/json" y Google exige application/ld+json).
+        context['json_ld'] = mark_safe(
+            json.dumps(json_ld, ensure_ascii=False).replace('<', '\\u003c')
+        )
+
         return context
     
     def _generate_keywords(self, portafolio):
