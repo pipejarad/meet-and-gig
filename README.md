@@ -103,8 +103,8 @@ plazo. El detalle de qué modelo está vivo y cuál dormido está en
 
 - Instrumentos (por categoría, incluye folclore chileno), géneros musicales, niveles de
   experiencia y comunas de Chile, normalizados para perfiles y búsqueda.
-- Se siembran automáticamente al migrar (migración de datos). El comando opcional
-  `python manage.py poblar_catalogos` carga un catálogo de instrumentos y géneros ampliado.
+- Se siembran automáticamente al migrar (migraciones de datos `0019` + `0030`): esa es la
+  **única fuente de verdad** del catálogo. No hay comando de seed aparte.
 
 ### 💬 Contacto mediado
 
@@ -182,7 +182,7 @@ meet-and-gig/
 │   ├── signals.py              # Auto-creación de perfil/portafolio
 │   ├── services/
 │   │   └── bio_ia.py           # Asistente de IA de biografías (aislado)
-│   ├── management/commands/    # poblar_catalogos, marcar_invitaciones_expiradas
+│   ├── management/commands/    # marcar_invitaciones_expiradas, aplicar_retencion_datos
 │   ├── migrations/
 │   └── templates/usuarios/     # Templates de la app
 ├── templates/
@@ -225,17 +225,14 @@ cp .env.example .env
 #   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 
 # 5. Aplicar migraciones (usa SQLite en desarrollo)
+# Las migraciones de datos siembran los catálogos completos (instrumentos por
+# categoría, géneros, niveles y comunas) — no hay comando de seed aparte.
 python manage.py migrate
 
-# 6. (Opcional) Ampliar los catálogos de instrumentos y géneros.
-# Las migraciones ya dejan poblados los catálogos base (instrumentos, géneros,
-# niveles y comunas); este comando solo agrega un set más amplio.
-python manage.py poblar_catalogos
-
-# 7. Crear un superusuario (opcional, para el admin)
+# 6. Crear un superusuario (opcional, para el admin)
 python manage.py createsuperuser
 
-# 8. Levantar el servidor de desarrollo
+# 7. Levantar el servidor de desarrollo
 python manage.py runserver
 ```
 

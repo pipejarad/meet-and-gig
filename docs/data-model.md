@@ -42,12 +42,16 @@
 
 ### Catálogos: `Instrumento`, `Genero`, `NivelExperiencia`, `Ubicacion`
 - **Para qué:** vocabulario normalizado para perfiles y búsqueda.
-- **Invariantes:** `nombre` único en los cuatro. Seed en la migración 0019
-  (portable SQLite/Postgres) y en el comando `poblar_catalogos`.
-  `Instrumento`/`Genero` nacieron `managed=False`: en una BD nueva sus tablas
-  las crea un `RunPython` portable en la migración **0011** (antes de los
-  modelos que les apuntan con FK — requisito de PostgreSQL); la 0019 conserva
-  un guard idéntico e idempotente.
+- **Invariantes:** `nombre` único en los cuatro. **Única fuente de verdad:
+  las migraciones de datos.** La 0019 siembra el catálogo base (portable
+  SQLite/Postgres) y la **0030** (auditoría D2) lo eleva al catálogo rico
+  chileno y normaliza lo ya sembrado: categoría `Viento`→`Vientos`, género
+  `Electronic`→`Electrónica`, sin `Charango` duplicado, sin genéricos que el
+  catálogo desglosa. El comando `poblar_catalogos` (que divergía de la
+  migración) **se eliminó**. `Instrumento`/`Genero` nacieron `managed=False`:
+  en una BD nueva sus tablas las crea un `RunPython` portable en la migración
+  **0011** (antes de los modelos que les apuntan con FK — requisito de
+  PostgreSQL); la 0019 conserva un guard idéntico e idempotente.
 
 ### `ContactoMusico`
 - **Para qué:** el contacto mediado de visitantes → músicos; el instrumento de
