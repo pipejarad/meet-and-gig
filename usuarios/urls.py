@@ -1,8 +1,13 @@
 from django.urls import path
+from django.views.generic import TemplateView
+
 from . import views
 
 urlpatterns = [
     path("", views.inicio, name="inicio"),
+    # Páginas legales (auditoría B1) — borradores PENDIENTES DE REVISIÓN LEGAL
+    path("terminos/", TemplateView.as_view(template_name='legal/terminos.html'), name="terminos"),
+    path("privacidad/", TemplateView.as_view(template_name='legal/privacidad.html'), name="privacidad"),
     path("registro/", views.registro_view, name="registro"),
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),

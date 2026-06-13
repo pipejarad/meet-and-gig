@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Términos de servicio - Meet & Gig{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="alert alert-warning" role="alert">
+        <strong>BORRADOR — PENDIENTE DE REVISIÓN LEGAL.</strong> Este documento es un
+        borrador de trabajo y aún no ha sido revisado por un abogado.
+      </div>
+
+      <h1 class="mb-1">Términos de servicio</h1>
+      <p class="text-muted">Última actualización: 12 de junio de 2026</p>
+
+      <h2 class="h5 mt-4">1. Qué es Meet &amp; Gig</h2>
+      <p>
+        Meet &amp; Gig es una plataforma web que funciona como vitrina para músicos
+        independientes en Chile: los músicos publican su portafolio profesional y los
+        visitantes interesados pueden contactarlos a través de un formulario.
+        Al crear una cuenta o usar el sitio aceptas estos términos. Si no estás de
+        acuerdo con ellos, no uses la plataforma.
+      </p>
+
+      <h2 class="h5 mt-4">2. Meet &amp; Gig es un intermediario tecnológico</h2>
+      <p>
+        Meet &amp; Gig <strong>solo facilita el contacto</strong> entre músicos y
+        personas u organizaciones interesadas en sus servicios. Meet &amp; Gig
+        <strong>no es empleador</strong> de los músicos, <strong>no es agencia</strong>
+        de representación ni de intermediación laboral, y <strong>no es parte de
+        ningún acuerdo</strong> que un músico y un contratante celebren entre sí.
+        Las condiciones, precios, pagos, plazos y cumplimiento de cada acuerdo son
+        responsabilidad exclusiva de quienes lo celebran. La plataforma no procesa
+        pagos ni custodia dinero de los usuarios.
+      </p>
+
+      <h2 class="h5 mt-4">3. Cuentas</h2>
+      <ul>
+        <li>Para registrarte debes ser mayor de 18 años.</li>
+        <li>La información que entregas debe ser veraz y estar actualizada.</li>
+        <li>Eres responsable de mantener la confidencialidad de tu contraseña y de la
+            actividad que ocurra en tu cuenta.</li>
+        <li>Puedes eliminar tu cuenta en cualquier momento desde la plataforma; ver la
+            <a href="{% url 'privacidad' %}">Política de privacidad</a> para el detalle
+            de qué ocurre con tus datos.</li>
+      </ul>
+
+      <h2 class="h5 mt-4">4. Contenido que publicas</h2>
+      <p>
+        El contenido que subes a tu portafolio (textos, fotografías, enlaces a audio y
+        video) <strong>sigue siendo tuyo</strong>. Al publicarlo nos otorgas una
+        licencia no exclusiva, gratuita y revocable para alojarlo, reproducirlo y
+        mostrarlo dentro de la plataforma y en la difusión de la misma, mientras tu
+        cuenta esté activa y el portafolio publicado. Declaras contar con los derechos
+        del contenido que publicas (incluyendo música, imágenes y grabaciones de
+        terceros que aparezcan en él).
+      </p>
+
+      <h2 class="h5 mt-4">5. Uso aceptable y causales de baja</h2>
+      <p>Podemos suspender o dar de baja una cuenta, previo aviso cuando sea posible, si:</p>
+      <ul>
+        <li>Se entrega información falsa o se suplanta a otra persona.</li>
+        <li>Se publica contenido ilícito, ofensivo o que infringe derechos de terceros.</li>
+        <li>Se usa el formulario de contacto u otras funciones para spam, acoso o
+            fines distintos a los de la plataforma.</li>
+        <li>Se intenta vulnerar la seguridad del sitio o de otros usuarios.</li>
+        <li>Se incumplen de cualquier otra forma estos términos.</li>
+      </ul>
+
+      <h2 class="h5 mt-4">6. Disponibilidad y responsabilidad</h2>
+      <p>
+        La plataforma se ofrece "tal cual" y en fase temprana: puede tener
+        interrupciones, cambios de funcionalidades o errores. En la medida que la ley
+        lo permita, Meet &amp; Gig no responde por los perjuicios derivados de los
+        acuerdos entre músicos y contratantes, ni garantiza resultados (contrataciones,
+        número de contactos o ingresos).
+      </p>
+
+      <h2 class="h5 mt-4">7. Cambios a estos términos</h2>
+      <p>
+        Podemos actualizar estos términos. Si el cambio es relevante, lo avisaremos por
+        email o dentro de la plataforma con anticipación razonable. El uso posterior de
+        la plataforma implica la aceptación de la versión vigente.
+      </p>
+
+      <h2 class="h5 mt-4">8. Ley aplicable</h2>
+      <p>
+        Estos términos se rigen por la ley chilena. Cualquier controversia será de
+        competencia de los tribunales ordinarios de justicia de Chile.
+      </p>
+
+      <h2 class="h5 mt-4">9. Contacto</h2>
+      <p>
+        [PENDIENTE: email de contacto oficial de la plataforma.]
+      </p>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
