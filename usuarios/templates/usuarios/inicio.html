@@ -205,7 +205,9 @@
   </div>
 </section>
 
-<!-- Estadísticas -->
+<!-- Estadísticas — ocultas bajo el umbral de músicos (auditoría C5):
+     números bajos son social proof inversa -->
+{% if mostrar_estadisticas %}
 <section class="py-5 bg-surface-100">
   <div class="container">
     <div class="row text-center justify-content-center">
@@ -238,6 +240,7 @@
     </div>
   </div>
 </section>
+{% endif %}
 
 <style>
   .min-vh-50 {

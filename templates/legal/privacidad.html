@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Política de privacidad - Meet & Gig{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="alert alert-warning" role="alert">
+        <strong>BORRADOR — PENDIENTE DE REVISIÓN LEGAL.</strong> Este documento es un
+        borrador de trabajo y aún no ha sido revisado por un abogado.
+      </div>
+
+      <h1 class="mb-1">Política de privacidad</h1>
+      <p class="text-muted">Última actualización: 12 de junio de 2026</p>
+
+      <p>
+        Esta política describe cómo Meet &amp; Gig trata los datos personales de sus
+        usuarios y de los visitantes que usan el formulario de contacto, conforme a la
+        Ley 21.719 de protección de datos personales de Chile.
+      </p>
+
+      <h2 class="h5 mt-4">1. Responsable del tratamiento</h2>
+      <p>
+        [PENDIENTE: identificación del responsable (persona o sociedad), domicilio y
+        email de contacto.]
+      </p>
+
+      <h2 class="h5 mt-4">2. Qué datos tratamos</h2>
+      <ul>
+        <li><strong>Cuenta del músico:</strong> email, nombre de usuario, nombre y
+            apellido (opcionales), foto de perfil (opcional) y la fecha de aceptación
+            de los términos.</li>
+        <li><strong>Perfil privado del músico:</strong> teléfono, fecha de nacimiento y
+            dirección (todos opcionales), y preferencias de notificación.</li>
+        <li><strong>Portafolio público:</strong> la información profesional que el
+            músico decide publicar (biografía, instrumentos, géneros, enlaces a redes y
+            material audiovisual). Es visible para cualquier visitante.</li>
+        <li><strong>Formulario de contacto (visitantes sin cuenta):</strong> nombre,
+            email, teléfono (opcional), mensaje, tipo de necesidad y la dirección IP
+            desde la que se envía.</li>
+        <li><strong>Recuperación de contraseña:</strong> email solicitado y dirección
+            IP de la solicitud.</li>
+        <li><strong>Seguridad del inicio de sesión:</strong> registro de intentos
+            fallidos (identificador usado y dirección IP) para bloquear ataques de
+            fuerza bruta.</li>
+        <li><strong>Asistente de biografía con IA (opcional):</strong> si el músico lo
+            usa, las respuestas del formulario del asistente se envían al proveedor del
+            modelo de lenguaje (Anthropic) para generar el borrador. No se envían sus
+            credenciales ni datos de contacto de terceros.</li>
+      </ul>
+
+      <h2 class="h5 mt-4">3. Para qué los usamos</h2>
+      <ul>
+        <li>Operar la vitrina: mostrar portafolios públicos y gestionar las cuentas.</li>
+        <li>Mediar el contacto: entregar al músico los mensajes de los visitantes y
+            avisarle por email (el email del músico nunca se muestra públicamente).</li>
+        <li>Seguridad y prevención de abuso: límites de envío por IP, bloqueo de
+            intentos de acceso y prevención de spam.</li>
+        <li>Métricas internas del funcionamiento de la plataforma (p. ej., cuántos
+            contactos se convierten en trabajos, según lo marca el propio músico).</li>
+      </ul>
+
+      <h2 class="h5 mt-4">4. Con quién se comparten</h2>
+      <p>
+        No vendemos datos personales ni los compartimos con terceros para publicidad.
+        Usamos proveedores que procesan datos por cuenta de la plataforma:
+        infraestructura y base de datos (Railway), almacenamiento de archivos
+        (Backblaze), envío de emails transaccionales (Resend) y, solo si el músico usa
+        el asistente de biografía, el proveedor de IA (Anthropic). El mensaje de un
+        visitante se comparte con el músico contactado, incluyendo su nombre, email y
+        teléfono si lo entregó, para que pueda responderle directamente.
+      </p>
+
+      <h2 class="h5 mt-4">5. Cuánto tiempo los conservamos</h2>
+      <ul>
+        <li>Los datos de la cuenta y del portafolio, mientras la cuenta exista.</li>
+        <li>La <strong>dirección IP</strong> de los mensajes de contacto se anonimiza a
+            los <strong>30 días</strong> del envío; el contenido del mensaje lo
+            conserva el músico en su panel.</li>
+        <li>Los registros de recuperación de contraseña se eliminan a los 30 días.</li>
+        <li>Los registros de seguridad del login se conservan solo el tiempo necesario
+            para aplicar los bloqueos.</li>
+        <li>Al <strong>eliminar tu cuenta</strong>, esta se desactiva y tus datos
+            personales (email, nombre, teléfono, foto, dirección) se anonimizan de
+            inmediato; el portafolio deja de ser visible públicamente.</li>
+      </ul>
+
+      <h2 class="h5 mt-4">6. Tus derechos</h2>
+      <p>
+        Puedes ejercer en cualquier momento tus derechos de <strong>acceso,
+        rectificación, supresión, oposición y portabilidad</strong> de tus datos
+        personales (derechos reconocidos por la Ley 21.719). Para los datos de tu
+        cuenta puedes hacerlo directamente desde la plataforma (editar tu perfil o
+        eliminar tu cuenta). Para cualquier otra solicitud — incluida la de visitantes
+        que usaron el formulario de contacto — escribe a [PENDIENTE: email de
+        contacto]. Responderemos dentro de los plazos legales.
+      </p>
+
+      <h2 class="h5 mt-4">7. Cookies</h2>
+      <p>
+        Usamos únicamente cookies técnicas necesarias para el funcionamiento del sitio
+        (sesión y protección CSRF). No usamos cookies de publicidad ni rastreadores de
+        terceros.
+      </p>
+
+      <h2 class="h5 mt-4">8. Seguridad</h2>
+      <p>
+        El sitio funciona sobre HTTPS, las contraseñas se almacenan con hash (nunca en
+        texto plano) y aplicamos límites automáticos contra el abuso (intentos de
+        acceso, envíos de formularios). Ningún sistema es infalible: si detectamos un
+        incidente que afecte tus datos, te lo comunicaremos conforme a la ley.
+      </p>
+
+      <h2 class="h5 mt-4">9. Cambios a esta política</h2>
+      <p>
+        Si esta política cambia de forma relevante, lo avisaremos por email o dentro de
+        la plataforma. La versión vigente estará siempre disponible en esta página.
+      </p>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

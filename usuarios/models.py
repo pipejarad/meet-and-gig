@@ -39,6 +39,13 @@ class Usuario(AbstractUser):
         blank=True,
         verbose_name='Foto de perfil'
     )
+    # Acreditación del consentimiento (Ley 21.719, auditoría B2): momento en
+    # que el usuario aceptó los Términos y la Política de Privacidad.
+    terminos_aceptados_en = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Términos aceptados en'
+    )
 
     objects = UsuarioManager()
 
@@ -1471,3 +1478,26 @@ class GeneracionBioIA(models.Model):
 
     def __str__(self):
         return f"{self.usuario.username} — {self.creado:%Y-%m-%d %H:%M}"
+
+
+class SolicitudRecuperacionPassword(models.Model):
+    """Registro de cada solicitud de recuperación de contraseña (auditoría A4).
+
+    Sostiene el rate limit por IP y por email destino contra email bombing,
+    con el mismo patrón de conteo en BD del contacto mediado. Se registra
+    SIEMPRE, exista o no la cuenta: registrar solo cuentas reales delataría
+    qué emails existen (anti-enumeración). Las filas pierden utilidad pasada
+    la ventana de 1 hora; su limpieza puede sumarse al command de retención
+    del Bloque B (B4).
+    """
+    email = models.EmailField(verbose_name='Email solicitado')
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-creado']
+        verbose_name = 'Solicitud de recuperación de contraseña'
+        verbose_name_plural = 'Solicitudes de recuperación de contraseña'
+
+    def __str__(self):
+        return f"{self.email} — {self.creado:%Y-%m-%d %H:%M}"

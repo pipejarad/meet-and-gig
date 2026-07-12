@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Demasiados intentos - Meet & Gig{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title text-center">Demasiados intentos</h4>
+      </div>
+      <div class="card-body text-center">
+        <p>
+          Por seguridad, el acceso quedó bloqueado temporalmente tras varios
+          intentos fallidos de inicio de sesión.
+        </p>
+        <p class="mb-0">
+          Espera una hora e inténtalo de nuevo. Si no recuerdas tu contraseña,
+          puedes <a href="{% url 'recuperar_password' %}">recuperarla aquí</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

@@ -243,7 +243,8 @@
                         <div class="row">
                             <div class="col-12 d-flex justify-content-between">
                                 <div>
-                                    <a href="{% url 'ver_perfil_musico' usuario.username %}" class="btn btn-secondary">
+                                    {# 'ver_mi_perfil' y no 'ver_perfil_musico': esa URL es ahora un redirect 301 al portafolio (C3) #}
+                                    <a href="{% url 'ver_mi_perfil' %}" class="btn btn-secondary">
                                         <i class="icon-arrow-left"></i> Cancelar
                                     </a>
                                 </div>

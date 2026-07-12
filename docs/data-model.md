@@ -17,6 +17,15 @@
   `UsuarioManager` normaliza el email a minúsculas en toda vía de creación.
   En v1 todo registro nuevo queda con `tipo_usuario='musico'` (forzado
   server-side en `RegistroForm.save()`).
+  `terminos_aceptados_en` (B2) acredita el consentimiento: lo sella
+  `RegistroForm.save()`; nullable porque las cuentas previas no lo tienen.
+  La **eliminación de cuenta** (B3) es soft-delete con anonimización:
+  `is_active=False`, email/username → `eliminado-<pk>…` (libera el email
+  real para re-registro), nombre/teléfono/dirección/foto borrados y
+  portafolio despublicado. La supresión llega hasta el **contenido** del
+  portafolio: biografía, formación, enlaces a las cuentas del músico y los
+  **archivos de multimedia** (que sobreviven a la despublicación) se borran,
+  no solo se ocultan. La fila nunca se borra (integridad referencial).
 
 ### `PerfilMusico`
 - **Para qué:** datos personales/privados del músico (teléfono, privacidad).
@@ -36,12 +45,16 @@
 
 ### Catálogos: `Instrumento`, `Genero`, `NivelExperiencia`, `Ubicacion`
 - **Para qué:** vocabulario normalizado para perfiles y búsqueda.
-- **Invariantes:** `nombre` único en los cuatro. Seed en la migración 0019
-  (portable SQLite/Postgres) y en el comando `poblar_catalogos`.
-  `Instrumento`/`Genero` nacieron `managed=False`: en una BD nueva sus tablas
-  las crea un `RunPython` portable en la migración **0011** (antes de los
-  modelos que les apuntan con FK — requisito de PostgreSQL); la 0019 conserva
-  un guard idéntico e idempotente.
+- **Invariantes:** `nombre` único en los cuatro. **Única fuente de verdad:
+  las migraciones de datos.** La 0019 siembra el catálogo base (portable
+  SQLite/Postgres) y la **0030** (auditoría D2) lo eleva al catálogo rico
+  chileno y normaliza lo ya sembrado: categoría `Viento`→`Vientos`, género
+  `Electronic`→`Electrónica`, sin `Charango` duplicado, sin genéricos que el
+  catálogo desglosa. El comando `poblar_catalogos` (que divergía de la
+  migración) **se eliminó**. `Instrumento`/`Genero` nacieron `managed=False`:
+  en una BD nueva sus tablas las crea un `RunPython` portable en la migración
+  **0011** (antes de los modelos que les apuntan con FK — requisito de
+  PostgreSQL); la 0019 conserva un guard idéntico e idempotente.
 
 ### `ContactoMusico`
 - **Para qué:** el contacto mediado de visitantes → músicos; el instrumento de
@@ -50,7 +63,9 @@
   **nullable** — la bisagra para cuentas de contratista en v2. Embudo `estado`:
   ENVIADO→VISTO ocurre automático al abrir "Mis contactos" (sella `visto_en`);
   RESPONDIDO/CONVERTIDO los marca el músico a mano — **nunca automatizar
-  `convertido`**. `ip_remitente` alimenta el límite anti-spam (5/hora por IP).
+  `convertido`**. `ip_remitente` alimenta el límite anti-spam (5/hora por IP)
+  y se **anonimiza a los 30 días** (command `aplicar_retencion_datos`, B4 —
+  plazo documentado en /privacidad/); el contenido del contacto no se toca.
   El email del músico jamás se renderiza en el HTML público; el aviso por email
   respeta `recibir_notificaciones_email` y lleva Reply-To del visitante.
 
@@ -61,6 +76,22 @@
   una llamada cuentan como una). El límite diario se calcula contando filas
   de hoy en la vista; el borrador elegido viaja por sesión y **nunca** se
   escribe directo en `Portafolio.biografia`.
+
+### `SolicitudRecuperacionPassword`
+- **Para qué:** rate limit de la recuperación de contraseña (auditoría A4):
+  3/hora por email destino y 5/hora por IP, contando filas en BD (mismo
+  patrón que `ContactoMusico`).
+- **Invariantes:** se crea una fila por CADA solicitud, exista o no la cuenta
+  (registrar solo cuentas reales delataría qué emails existen). Al exceder el
+  límite la respuesta no cambia: se degrada en silencio (sin email). Las
+  filas pierden utilidad pasada la ventana de 1 hora; el command
+  `aplicar_retencion_datos` (B4) las elimina a los 30 días.
+
+### Tablas de terceros: `axes_*` (django-axes, auditoría A4)
+- Bloqueo de fuerza bruta del login: 5 intentos fallidos por usuario+IP →
+  1 hora de bloqueo. Las gestiona django-axes con sus propias migraciones
+  (`AccessAttempt`, `AccessLog`, `AccessFailureLog`); config en
+  `settings/base.py` (bloque AXES_*).
 
 ## Modelos DIFERIDOS (presentes en el código — no construir sobre ellos, no borrar)
 

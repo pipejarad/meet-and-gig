@@ -102,6 +102,17 @@ class RegistroForm(UserCreationForm):
         })
     )
 
+    # Consentimiento explícito (auditoría B2). El timestamp se guarda en
+    # Usuario.terminos_aceptados_en al registrarse.
+    acepta_terminos = forms.BooleanField(
+        label='He leído y acepto los Términos de servicio y la Política de Privacidad',
+        required=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        error_messages={
+            'required': 'Debes aceptar los Términos y la Política de Privacidad para registrarte.',
+        }
+    )
+
     class Meta:
         model = Usuario
         fields = ['username', 'email', 'tipo_usuario', 'foto_perfil', 'password1', 'password2']
@@ -119,15 +130,28 @@ class RegistroForm(UserCreationForm):
         username = self.cleaned_data.get('username')
         if not username:
             return username
-            
+
+        # Un username con '@' puede hacerse pasar por el email de otra cuenta
+        # y bloquearle el login (hallazgo A3): el backend de autenticación
+        # busca por ambos campos.
+        if '@' in username:
+            raise ValidationError("El nombre de usuario no puede contener '@'.")
+
         if Usuario.objects.filter(username__iexact=username).exists():
             raise ValidationError("Este nombre de usuario ya está en uso.")
+
+        # Defensa en profundidad por si la regla del '@' se relajara: nunca
+        # permitir un username que coincida con un email ya registrado.
+        if Usuario.objects.filter(email__iexact=username).exists():
+            raise ValidationError("Este nombre de usuario no está disponible.")
+
         return username
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email'].lower()
         user.tipo_usuario = 'musico'  # DIFERIDO v1: solo se registran músicos
+        user.terminos_aceptados_en = timezone.now()  # consentimiento (B2)
         if commit:
             user.save()
         return user

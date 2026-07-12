@@ -1,3 +1,5 @@
+import ipaddress
+import json
 import logging
 from datetime import timedelta
 
@@ -19,14 +21,21 @@ from django.views.generic import CreateView, UpdateView, DetailView
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 from .forms import (
     RegistroForm, LoginForm, RecuperarPasswordForm, CambiarPasswordForm,
     PerfilMusicoForm, PerfilEmpleadorForm, PortafolioForm, CrearOfertaLaboralForm,
     PostulacionForm, SolicitudReferenciaForm, ResponderReferenciaForm, TestimonioDirectoForm,
     ContactoMusicoForm, AsistenteBioForm
 )
-from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLaboral, Postulacion, Notificacion, Invitacion, Testimonio, ContactoMusico, GeneracionBioIA
+from .models import Usuario, PerfilMusico, PerfilEmpleador, Portafolio, OfertaLaboral, Postulacion, Notificacion, Invitacion, Testimonio, ContactoMusico, GeneracionBioIA, SolicitudRecuperacionPassword
 from .services import bio_ia
+
+
+# Social proof inversa (auditoría C5): mostrar "3 Músicos Registrados"
+# comunica lo contrario de lo que se busca. Bajo este umbral, el home
+# oculta el bloque de estadísticas.
+UMBRAL_MUSICOS_PARA_ESTADISTICAS = 50
 
 
 def inicio(request):
@@ -37,7 +46,7 @@ def inicio(request):
         'portafolio_instrumentos__instrumento',
         'portafolio_generos__genero'
     ).order_by('-fecha_actualizacion')[:6]
-    
+
     stats = {
         'total_musicos': Usuario.objects.filter(tipo_usuario='musico').count(),
         'total_empleadores': Usuario.objects.filter(tipo_usuario='empleador').count(),
@@ -45,12 +54,13 @@ def inicio(request):
         'total_ofertas': OfertaLaboral.objects.filter(estado='publicada').count(),
         'total_usuarios': Usuario.objects.count(),
     }
-    
+
     context = {
         'portafolios_destacados': portafolios_destacados,
         'stats': stats,
+        'mostrar_estadisticas': stats['total_musicos'] >= UMBRAL_MUSICOS_PARA_ESTADISTICAS,
     }
-    
+
     return render(request, 'usuarios/inicio.html', context)
 
 
@@ -98,7 +108,11 @@ def login_view(request):
             login(request, user)
             messages.success(request, f'¡Bienvenido de vuelta, {user.username}!')
             return _redirect_by_user_type(user)
-        else:
+        elif not getattr(request, 'axes_locked_out', False):
+            # Si axes bloqueó la request, el middleware reemplaza esta
+            # respuesta por la página 429: encolar aquí el error del form
+            # haría que el bloqueo acuse "contraseña incorrecta" aunque la
+            # contraseña enviada fuera la correcta.
             messages.error(request, 'Email o contraseña incorrectos.')
     else:
         form = LoginForm()
@@ -127,21 +141,48 @@ def _redirect_by_user_type(user):
         return redirect('inicio')  # Temporal hasta crear perfil_empleador_crear
 
 
+# Rate limit de recuperación de contraseña (auditoría A4): impide email
+# bombing hacia una cuenta y el abuso en volumen desde una misma IP.
+LIMITE_RECUPERACIONES_POR_EMAIL_HORA = 3
+LIMITE_RECUPERACIONES_POR_IP_HORA = 5
+
+logger_auth = logging.getLogger('usuarios.auth')
+
+
 def recuperar_password_view(request):
     if request.user.is_authenticated:
         return redirect('inicio')
-        
+
     if request.method == 'POST':
         form = RecuperarPasswordForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
-            try:
-                user = Usuario.objects.get(email__iexact=email)
-                _send_password_reset_email(request, user)
-            except Usuario.DoesNotExist:
-                # Respuesta idéntica exista o no la cuenta, para no revelar
-                # qué emails están registrados (enumeración de usuarios).
-                pass
+
+            # El límite se evalúa ANTES de consultar si la cuenta existe y la
+            # solicitud se registra SIEMPRE: si dependiera de la existencia
+            # del usuario, el comportamiento delataría qué emails están
+            # registrados (anti-enumeración). Al exceder el límite se degrada
+            # en silencio: mismo mensaje de éxito, sin enviar email.
+            ip = _ip_del_request(request)
+            hace_una_hora = timezone.now() - timedelta(hours=1)
+            excedido = (
+                SolicitudRecuperacionPassword.objects.filter(
+                    email__iexact=email, creado__gte=hace_una_hora
+                ).count() >= LIMITE_RECUPERACIONES_POR_EMAIL_HORA
+                or (ip and SolicitudRecuperacionPassword.objects.filter(
+                    ip=ip, creado__gte=hace_una_hora
+                ).count() >= LIMITE_RECUPERACIONES_POR_IP_HORA)
+            )
+            SolicitudRecuperacionPassword.objects.create(email=email, ip=ip)
+
+            if not excedido:
+                try:
+                    user = Usuario.objects.get(email__iexact=email)
+                    _send_password_reset_email(request, user)
+                except Usuario.DoesNotExist:
+                    # Respuesta idéntica exista o no la cuenta, para no revelar
+                    # qué emails están registrados (enumeración de usuarios).
+                    pass
             messages.success(
                 request,
                 'Si el email está registrado, te enviamos un enlace de recuperación. '
@@ -214,13 +255,88 @@ Saludos,
 El equipo de Meet & Gig
 """
     
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    # Sin el try/except, un fallo del SMTP producía un 500 SOLO para cuentas
+    # existentes: un oráculo de enumeración además del error visible (A4).
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+    except Exception:
+        logger_auth.exception(
+            'Error enviando email de recuperación de contraseña (user id=%s)', user.pk
+        )
+
+
+@login_required
+def eliminar_cuenta_view(request):
+    """Eliminación de cuenta (auditoría B3, Ley 21.719).
+
+    Soft-delete: la fila Usuario se conserva (integridad referencial de
+    contactos y métricas) pero el dato personal queda irreconocible:
+    is_active=False, email/username → placeholders únicos por pk, nombre,
+    teléfono, dirección y foto borrados, y portafolio despublicado. El
+    placeholder libera el email real para un eventual re-registro.
+    """
+    if request.method != 'POST':
+        return render(request, 'usuarios/eliminar_cuenta.html')
+
+    usuario = request.user
+    with transaction.atomic():
+        try:
+            portafolio = usuario.portafolio
+        except Portafolio.DoesNotExist:
+            portafolio = None
+        if portafolio is not None:
+            # Los archivos de multimedia (imágenes subidas) sobreviven a la
+            # despublicación: hay que borrarlos del almacenamiento, no solo
+            # ocultarlos, para que la supresión sea real (Ley 21.719).
+            for media in portafolio.multimedia.all():
+                if media.imagen:
+                    media.imagen.delete(save=False)
+            portafolio.multimedia.all().delete()
+
+            # Biografía, formación y enlaces a las cuentas del músico son dato
+            # personal: se anonimizan además de despublicar el portafolio.
+            portafolio.biografia = ''
+            portafolio.formacion_musical = ''
+            portafolio.website_personal = ''
+            portafolio.soundcloud_url = ''
+            portafolio.youtube_url = ''
+            portafolio.spotify_url = ''
+            portafolio.instagram_url = ''
+            portafolio.facebook_url = ''
+            portafolio.video_demo = ''
+            portafolio.activo = False
+            portafolio.save()
+
+        try:
+            perfil = usuario.perfil_musico
+        except PerfilMusico.DoesNotExist:
+            perfil = None
+        if perfil is not None:
+            perfil.telefono = ''
+            perfil.direccion = ''
+            perfil.fecha_nacimiento = None
+            perfil.save()
+
+        if usuario.foto_perfil:
+            usuario.foto_perfil.delete(save=False)
+
+        usuario.first_name = ''
+        usuario.last_name = ''
+        usuario.email = f'eliminado-{usuario.pk}@cuenta-eliminada.invalid'
+        usuario.username = f'eliminado-{usuario.pk}'
+        usuario.set_unusable_password()
+        usuario.is_active = False
+        usuario.save()
+
+    logout(request)
+    messages.info(request, 'Tu cuenta fue eliminada. Gracias por haber sido parte de Meet & Gig.')
+    return redirect('inicio')
 
 
 @login_required
@@ -517,29 +633,22 @@ def editar_portafolio_musico(request):
 
 
 def ver_perfil_musico(request, username):
-    """Vista pública del perfil de un músico"""
+    """Redirección permanente al portafolio (auditoría C3).
+
+    /perfil/<username>/ y /portafolio/<slug>/ eran dos páginas públicas para
+    el mismo músico y dividían el SEO; la canónica es el portafolio. El 301
+    conserva los links externos que ya apunten al perfil. Sin portafolio
+    activo, 404 como antes (el dueño sí es redirigido: ve su portafolio
+    despublicado como vista previa).
+    """
     usuario = get_object_or_404(Usuario, username=username, tipo_usuario='musico')
 
-    try:
-        perfil = usuario.perfil_musico
-    except PerfilMusico.DoesNotExist:
-        raise Http404("Este músico no tiene un perfil disponible.")
-
     es_mi_perfil = request.user.is_authenticated and request.user == usuario
-
-    # Un portafolio despublicado (activo=False) oculta también el perfil
-    # público (igual que en búsqueda y home), salvo para el propio músico.
     portafolio = getattr(usuario, 'portafolio', None)
-    if portafolio and not portafolio.activo and not es_mi_perfil:
+    if portafolio is None or (not portafolio.activo and not es_mi_perfil):
         raise Http404("Este músico no tiene un perfil disponible.")
 
-    context = {
-        'perfil': perfil,
-        'usuario': usuario,
-        'es_mi_perfil': es_mi_perfil,
-        'titulo': f'Perfil de {usuario.get_full_name() or usuario.username}'
-    }
-    return render(request, 'usuarios/ver_perfil_musico.html', context)
+    return redirect('ver_portafolio', slug=portafolio.slug, permanent=True)
 
 
 def buscar_portafolios(request):
@@ -675,6 +784,19 @@ class PortafolioUnificadoView(DetailView):
             'portafolio_generos__genero',
         )
 
+    def get_object(self, queryset=None):
+        # Un portafolio despublicado (activo=False) no existe para el público
+        # — si esto no se aplica, despublicar y eliminar la cuenta (B3) no
+        # tendrían efecto. El dueño sí lo ve, como vista previa.
+        portafolio = super().get_object(queryset)
+        es_propietario = (
+            self.request.user.is_authenticated
+            and self.request.user == portafolio.usuario
+        )
+        if not portafolio.activo and not es_propietario:
+            raise Http404('Este portafolio no está disponible.')
+        return portafolio
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         portafolio = self.object  # ya resuelto por DetailView; no re-consultar
@@ -698,7 +820,46 @@ class PortafolioUnificadoView(DetailView):
         context['seo_description'] = biografia_truncada
         context['seo_keywords'] = self._generate_keywords(portafolio)
         context['canonical_url'] = self.request.build_absolute_uri()
-        
+
+        # JSON-LD construido aquí y serializado UNA vez (auditoría C1): si el
+        # template interpola campo a campo, el autoescape convierte los & de
+        # las URLs en &amp; y Google descarta el structured data.
+        json_ld = {
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            'name': nombre_completo,
+            'description': context['seo_description'],
+            'url': context['canonical_url'],
+            'jobTitle': 'Músico',
+        }
+        if portafolio.usuario.foto_perfil:
+            json_ld['image'] = self.request.build_absolute_uri(
+                portafolio.usuario.foto_perfil.url
+            )
+        if portafolio.ubicacion:
+            json_ld['address'] = {
+                '@type': 'PostalAddress',
+                'addressLocality': str(portafolio.ubicacion),
+            }
+        same_as = [
+            url for url in (
+                portafolio.website_personal,
+                portafolio.soundcloud_url,
+                portafolio.youtube_url,
+                portafolio.spotify_url,
+                portafolio.instagram_url,
+                portafolio.facebook_url,
+            ) if url
+        ]
+        if same_as:
+            json_ld['sameAs'] = same_as
+        # < impide cerrar el <script> desde un dato (mismo escape que
+        # aplica el filtro json_script, que aquí no sirve porque fija el
+        # type="application/json" y Google exige application/ld+json).
+        context['json_ld'] = mark_safe(
+            json.dumps(json_ld, ensure_ascii=False).replace('<', '\\u003c')
+        )
+
         return context
     
     def _generate_keywords(self, portafolio):
@@ -2272,10 +2433,29 @@ LIMITE_CONTACTOS_POR_IP_HORA = 5
 
 
 def _ip_del_request(request):
-    """IP real del visitante, considerando el proxy de Railway."""
+    """IP real del visitante detrás del proxy de Railway.
+
+    Alimenta los rate limits de contacto, recuperación de contraseña y login
+    (django-axes vía AXES_CLIENT_IP_CALLABLE).
+
+    OJO: se toma el ÚLTIMO elemento de X-Forwarded-For a propósito, NO el
+    primero (auditoría A5). El cliente puede mandar el header con cualquier
+    contenido — tomar el primero permite falsificar la IP y evadir los
+    límites — mientras que el último lo anexa el proxy de Railway con la IP
+    de la conexión real. Esto asume EXACTAMENTE un proxy confiable delante
+    (Railway); si algún día se agrega otro (p. ej. Cloudflare), habrá que
+    revisar esta función. No lo "corrijas" de vuelta a [0].
+    """
     xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
     if xff:
-        return xff.split(',')[0].strip()
+        candidata = xff.rsplit(',', 1)[-1].strip()
+        try:
+            ipaddress.ip_address(candidata)
+            return candidata
+        except ValueError:
+            # Valor malformado: ContactoMusico.ip_remitente (campo inet)
+            # fallaría al guardar. REMOTE_ADDR siempre existe bajo gunicorn.
+            pass
     return request.META.get('REMOTE_ADDR')
 
 

@@ -58,8 +58,8 @@ SECURE_HSTS_PRELOAD = True
 # produce un bucle infinito de redirecciones y las cookies Secure no se fijan.
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Django 4.2 exige el origen completo para aceptar POST sobre HTTPS detrás
-# de proxy. Ej: https://meetandgig.up.railway.app,https://meetandgig.cl
+# Django exige el origen completo (con esquema) para aceptar POST sobre HTTPS
+# detrás de proxy. Ej: https://meetandgig.up.railway.app,https://meetandgig.cl
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])  # noqa: F405
 
 # --------------------------------------------------------------------------

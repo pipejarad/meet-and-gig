@@ -108,6 +108,10 @@ Genera borradores de biografía desde un formulario de preguntas predefinidas
 - `ANTHROPIC_API_KEY` (asistente de IA) es **opcional**: sin ella el asistente se
   desactiva solo con un aviso. Nada más del sitio depende de la API de Anthropic —
   no bloquea el lanzamiento.
+- **Cron de retención (Ley 21.719):** `python manage.py aplicar_retencion_datos`
+  debe correr a diario en Railway (Cron Schedule). Anonimiza IPs de contactos a
+  los 30 días — plazo prometido en `/privacidad/`; si cambia el plazo, cambiar
+  ambos.
 
 ---
 

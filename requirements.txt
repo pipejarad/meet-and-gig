@@ -1,32 +1,28 @@
 # Dependencias principales para MeetAndGig
 # Django Framework
-Django==4.2.20
+Django==5.2.15
 
 # Manejo de imágenes (para foto_perfil)
-Pillow==11.2.1
+Pillow==12.2.0
 
 # Utilidades de Django
 asgiref==3.8.1
-sqlparse==0.4.1
+sqlparse==0.5.5
 tzdata==2025.2
 
-# Para desarrollo y testing
-autopep8==1.5.7
-pycodestyle==2.7.0
-
-# Timezone support
-pytz==2021.1
-
 # Configuración
-django-environ==0.11.2
+django-environ==0.13.0
 toml==0.10.2
 typing_extensions==4.15.0
 
+# Seguridad — bloqueo de fuerza bruta en el login (auditoría A4)
+django-axes==8.3.1
+
 # Producción (Railway) — Bloques 2-5 del ROADMAP
 psycopg[binary]==3.2.9
-whitenoise==6.7.0
+whitenoise==6.12.0
 gunicorn==23.0.0
-django-storages[s3]==1.14.4
+django-storages[s3]==1.14.6
 
 # Asistente de IA del portafolio (ROADMAP §8)
 anthropic==0.105.2

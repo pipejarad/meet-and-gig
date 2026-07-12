@@ -1,0 +1,10 @@
+# Dependabot: avisa con PRs cuando haya actualizaciones (incluidas las de
+# seguridad) de las dependencias de Python. Requiere además activar
+# Dependabot en GitHub: Settings → Code security → Dependabot.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

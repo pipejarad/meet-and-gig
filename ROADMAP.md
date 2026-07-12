@@ -372,21 +372,98 @@ para Postgres (migración 0019 portable; unicidad case-insensitive de email/user
 - [ ] Emails de postulaciones/invitaciones con URLs hardcodeadas `http://127.0.0.1:8000`.
 - [ ] `Testimonio.token_solicitud` sin `unique=True` (links de aprobación de referencias).
 
-**Inconsistencia de datos en catálogos (módulo ACTIVO) — pendiente (08-06-2026):**
-Hay dos sembradores de catálogos que **no coinciden entre sí**:
-- [ ] La migración de datos `0019` (corre en todo `migrate`, fresca o no) siembra **10
-      instrumentos** en 4 categorías (usa `Viento` en singular), **10 géneros**, 4 niveles
-      y **80 comunas**. El comando opcional `poblar_catalogos` siembra un set distinto:
-      **56 instrumentos** en 5 categorías (`Vientos` en plural + `Folclore Chileno`), **15
-      géneros** y solo **16 comunas**. Tras correr ambos quedan catálogos mezclados y
-      semánticamente duplicados (p. ej. `Guitarra` de la migración junto a `Guitarra
-      Clásica/Eléctrica/Acústica` del comando; categorías `Viento` y `Vientos` coexisten).
-- [ ] `poblar_catalogos.py` tiene `Charango` duplicado entre `Cuerdas` y `Percusión`
-      (inofensivo por `get_or_create`, pero queda en la categoría que corra primero).
-- [ ] Decisión pendiente: unificar en **una sola fuente de verdad** (idealmente la migración
-      de datos) y retirar o realinear el comando. No bloquea producción; afecta la calidad
-      del dato que ve el músico al elegir instrumentos/géneros. (Era la causa de los números
-      inflados —"63 instrumentos / 28 géneros"— que tenía el README viejo.)
+**Inconsistencia de datos en catálogos (módulo ACTIVO) — ✅ resuelto el 13-06-2026 (D2):**
+Había dos sembradores divergentes (la migración `0019` y el comando `poblar_catalogos`):
+categorías `Viento`/`Vientos`, géneros `Electronic`/`Electrónica`, `Charango` duplicado y
+genéricos junto a sus desgloses. La migración de datos `0030` consolidó el catálogo rico
+chileno como **única fuente de verdad** y normalizó lo ya sembrado en prod; el comando
+`poblar_catalogos` se eliminó. Detalle en el Bloque D más abajo.
+
+### Auditoría externa del 11-06-2026 (`docs/auditoria-2026-06-11.md`)
+
+**Bloque A — Seguridad: ✅ resuelto el 11-06-2026** (rama `fix/auditoria-bloque-a`,
+un commit por hallazgo):
+- [x] **A1** Django 4.2.20 (EOL) → 5.2.15 LTS, con bumps de compatibilidad
+      (whitenoise 6.12, django-storages 1.14.6, django-environ 0.13). Postgres de
+      Railway verificado en versión 18 (≥14 exigido). Python local subido a 3.11
+      (venv recreado), igual que `runtime.txt`. Los `URLField` no cambian de
+      comportamiento en 5.2 (el default pasa a `https` recién en Django 6).
+- [x] **A2** Pillow → 12.2.0 (la 11.3 que pedía la auditoría acumulaba 7 CVEs más),
+      sqlparse → 0.5.5, pytz eliminado, autopep8/pycodestyle a requirements-dev,
+      `.github/dependabot.yml` creado. `pip-audit`: 0 vulnerabilidades conocidas.
+- [x] **A3** Bug de bloqueo de cuentas (MultipleObjectsReturned en `EmailBackend`):
+      búsqueda por email primero y username como fallback + `clean_username` rechaza
+      `@` y colisiones con emails. Con test de regresión.
+- [x] **A4** Login con django-axes (5 intentos → 1 h de bloqueo por usuario+IP, IP
+      real vía `_ip_del_request`, `AXES_USERNAME_CALLABLE` propio) y rate limit de
+      recuperación de contraseña (3/h por email, 5/h por IP, modelo
+      `SolicitudRecuperacionPassword`) preservando la anti-enumeración. De paso: un
+      fallo SMTP ya no produce 500 solo para cuentas existentes (oráculo de
+      enumeración).
+- [x] **A5** `_ip_del_request` toma el último elemento de X-Forwarded-For (el que
+      anexa el proxy de Railway) con validación de formato — el primero lo escribe
+      el cliente y permitía evadir los rate limits.
+- [x] Hallazgo lateral: `.gitignore` tenía `test_*.py` (regla de archivos temporales)
+      que ignoraba TODOS los tests — por eso la suite histórica nunca llegó al repo
+      (contexto de D1). Regla eliminada; hay 22 tests corriendo con
+      `manage.py test usuarios`.
+
+**Bloque B — Cumplimiento legal (Ley 21.719): ✅ resuelto el 12-06-2026:**
+- [x] **B1** Páginas /terminos/ y /privacidad/ (borradores marcados PENDIENTE DE
+      REVISIÓN LEGAL), footer nuevo en base.html con ambos links.
+- [x] **B2** Checkbox de consentimiento obligatorio en el registro (con links) +
+      `Usuario.terminos_aceptados_en` (migración 0029).
+- [x] **B3** Vista `eliminar_cuenta` (POST con confirmación, en el dropdown):
+      soft-delete con anonimización inmediata + portafolio despublicado. De paso se
+      arregló que `PortafolioUnificadoView` ignoraba `activo` y servía portafolios
+      despublicados al público (ahora 404; el dueño lo ve como vista previa).
+- [x] **B4** Command `aplicar_retencion_datos` (--dry-run disponible): anonimiza
+      `ip_remitente` de contactos a los 30 días y borra solicitudes de recuperación
+      antiguas. **Acción del usuario:** crear el cron en Railway (servicio con
+      Cron Schedule diario, ej. `0 5 * * *`, comando
+      `python manage.py aplicar_retencion_datos`).
+- **Acciones del usuario que deja el bloque:** pasar los borradores legales por
+  abogado y completar los `[PENDIENTE]` (responsable del tratamiento y email de
+  contacto para derechos ARCO).
+- Bug encontrado (pendiente, módulo activo): el slug del portafolio deriva del
+  username y puede **chocar con rutas reservadas** (`portafolio/musico/`,
+  `portafolio/asistente-bio/`): un usuario llamado `musico` tendría su URL pública
+  inalcanzable (la captura la vista privada). Reservar esos nombres al generar el
+  slug o validar el username.
+
+**Bloque C — SEO y vitrina: ✅ resuelto el 13-06-2026:**
+- [x] **C1** JSON-LD del portafolio construido y serializado en
+      `PortafolioUnificadoView` (antes el autoescape del template corrompía las
+      URLs de `sameAs` con `&amp;` y emitía `address` "None").
+- [x] **C2** Embed de YouTube robusto vía filtro `usuarios.templatetags.videos
+      .youtube_id` (valida dominio + ID de 11 chars; cae a link plano si no aplica).
+      Reemplaza el `slice` posicional que solo servía a dos formatos de URL.
+- [x] **C3** `/perfil/<username>/` ahora redirige 301 al portafolio canónico (era
+      contenido duplicado que dividía el SEO). Sin portafolio activo → 404.
+- [x] **C4** `sitemap.xml` (home + directorio + portafolios activos con `lastmod`)
+      y `robots.txt` (bloquea `/admin/`, `/mis-contactos/`, `/cuenta/` y rutas
+      privadas; apunta al sitemap). Nueva app `django.contrib.sitemaps`.
+- [x] **C5** El home oculta el bloque de estadísticas bajo 50 músicos (constante
+      `UMBRAL_MUSICOS_PARA_ESTADISTICAS`): números bajos son social proof inversa.
+
+**Bloque D — Tests e higiene: ✅ resuelto el 13-06-2026:**
+- [x] **D1** Borrado el andamiaje de tests muerto (`conftest.py` con fixtures de
+      campos extintos, `tests/` raíz con factories rotas, `REORGANIZACION_FINAL.md`,
+      `settings.py.bak`). `pytest.ini` reescrito (settings.development, sin el
+      filterwarnings roto, sin `--nomigrations`) y `pytest`/`pytest-django` subidos
+      para Django 5.2. Suite de humo del embudo de contacto (12 tests) que faltaba;
+      registro→login→portafolio ya estaban cubiertos por A/B/C. **80 tests verdes**
+      (pytest y `manage.py test`).
+- [x] **D2** Borrado `mis_postulaciones_debug.html` (template huérfano) y
+      `scripts/debug/` (scripts ad-hoc). Catálogos unificados en la migración `0030`
+      (ver arriba); comando `poblar_catalogos` eliminado.
+
+**Auditoría 11-06-2026 completa: A + B + C + D resueltos.** Quedan acciones del
+usuario (no son de código): activar Dependabot, backups de Postgres, cron de
+retención (`aplicar_retencion_datos`), credenciales (B2/Resend/Anthropic), dominio
++ SPF/DKIM/DMARC, revisión legal de los borradores + completar sus `[PENDIENTE]`, y
+(opcional) Sentry. Bug menor abierto: colisión del slug de portafolio con rutas
+reservadas (`portafolio/musico/`, etc.) — reservar esos nombres al generar el slug.
 
 ---
 

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar mi cuenta - Meet & Gig{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="card border-danger">
+      <div class="card-header bg-danger text-white">
+        <h4 class="card-title text-center mb-0">Eliminar mi cuenta</h4>
+      </div>
+      <div class="card-body">
+        <p>Esta acción <strong>no se puede deshacer</strong>. Al confirmar:</p>
+        <ul>
+          <li>Tu cuenta quedará desactivada y no podrás volver a entrar con ella.</li>
+          <li>Tus datos personales (email, nombre, teléfono, dirección y foto)
+              se anonimizan de inmediato.</li>
+          <li>Tu portafolio dejará de ser visible públicamente.</li>
+        </ul>
+        <p class="text-muted small">
+          Si solo quieres pausar tu presencia, también puedes despublicar tu
+          portafolio desde su editor sin eliminar la cuenta.
+        </p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-user-times mr-2" aria-hidden="true"></i>Sí, eliminar mi cuenta definitivamente
+            </button>
+            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

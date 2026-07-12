@@ -31,7 +31,7 @@ Genero           (nombre, descripcion)
 NivelExperiencia (nombre, orden, años_minimos, años_maximos)
 Ubicacion        (nombre, region, pais, orden, activo)
 ```
-Poblados vía management command `poblar_catalogos`.
+Poblados por las migraciones de datos `0019` + `0030` (única fuente de verdad).
 
 ### Portafolio del músico (perfil público)
 ```
@@ -217,8 +217,8 @@ meet-and-gig/
 │   ├── backends.py      # EmailBackend
 │   ├── admin.py         # Registro admin
 │   └── management/commands/
-│       ├── poblar_catalogos.py           # Seeds de catálogos
-│       └── marcar_invitaciones_expiradas.py  # Tarea programada manual
+│       ├── marcar_invitaciones_expiradas.py   # Tarea programada (diferido)
+│       └── aplicar_retencion_datos.py         # Retención de datos (cron, B4)
 ├── templates/
 │   ├── base.html
 │   └── emails/          # 4 templates de email

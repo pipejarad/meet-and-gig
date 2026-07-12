@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /mis-contactos/
+Disallow: /cuenta/
+Disallow: /perfil/musico/
+Disallow: /portafolio/musico/
+Disallow: /portafolio/asistente-bio/
+
+Sitemap: {{ request.scheme }}://{{ request.get_host }}/sitemap.xml

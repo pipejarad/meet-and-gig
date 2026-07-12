@@ -4,8 +4,8 @@
 # Dependencias adicionales para desarrollo
 
 # Testing y debugging
-pytest==7.4.4
-pytest-django==4.7.0
+pytest==8.4.2
+pytest-django==4.12.0
 pytest-cov==4.1.0
 pytest-mock==3.12.0
 pytest-xdist==3.5.0
@@ -15,6 +15,10 @@ coverage==7.3.2
 django-debug-toolbar==4.2.0
 
 # Formateo de código
+# autopep8/pycodestyle fijados en el rango que exige flake8 6
+# (pycodestyle >=2.10,<2.11; autopep8 2.3+ exigiría pycodestyle >=2.12)
+autopep8==2.0.4
+pycodestyle==2.10.0
 black==23.7.0
 flake8==6.0.0
 

@@ -18,19 +18,6 @@ Scripts para facilitar el desarrollo y visualización de datos:
   - Verifica 6 perfiles de músicos de demostración
   - Permite limpiar usuarios incompletos
 
-### `/debug/`
-
-Scripts para debugging y resolución de problemas:
-
-- **`debug_sociales.py`**: Debuggea problemas con redes sociales en portafolios
-
-  - Uso: `python scripts/debug/debug_sociales.py`
-  - Verifica campos de redes sociales y formularios
-
-- **`debug_password.py`**: Debuggea el sistema de recuperación de contraseñas
-  - Uso: `python scripts/debug/debug_password.py`
-  - Verifica comportamiento con emails inexistentes
-
 ### `/data/`
 
 Scripts para manejo y creación de datos:
@@ -59,7 +46,6 @@ Todos los scripts están configurados para:
 ```bash
 # Scripts Python
 python scripts/desarrollo/verificar_perfiles.py
-python scripts/debug/debug_sociales.py
 python scripts/data/crear_perfiles_musicos.py
 
 # Scripts PowerShell

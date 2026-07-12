@@ -118,6 +118,23 @@
               {% endif %}
             </div>
 
+            <div class="mb-4">
+              <div class="form-check">
+                {{ form.acepta_terminos }}
+                <label class="form-check-label" for="{{ form.acepta_terminos.id_for_label }}">
+                  He leído y acepto los
+                  <a href="{% url 'terminos' %}" target="_blank">Términos de servicio</a>
+                  y la
+                  <a href="{% url 'privacidad' %}" target="_blank">Política de privacidad</a>.
+                </label>
+              </div>
+              {% if form.acepta_terminos.errors %}
+                <div class="text-danger small mt-1">
+                  {% for error in form.acepta_terminos.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
             <div class="d-grid gap-2">
               <button type="submit" class="btn btn-primary btn-lg">
                 <i class="fas fa-user-plus mr-2"></i>Registrarse

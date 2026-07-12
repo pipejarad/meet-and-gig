@@ -25,6 +25,8 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
 AUTHENTICATION_BACKENDS = [
+    # axes va PRIMERO: corta el flujo de autenticación cuando hay bloqueo
+    'axes.backends.AxesStandaloneBackend',
     'usuarios.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -36,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',
+    'axes',
     'usuarios',
     'django.forms',
 ]
@@ -49,7 +53,40 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
+
+# --------------------------------------------------------------------------
+# django-axes — bloqueo de fuerza bruta en el login (auditoría A4)
+# Usa la BD (AccessAttempt): consistente entre workers de gunicorn y entre
+# deploys; no usar el handler de cache mientras no exista un cache compartido.
+# --------------------------------------------------------------------------
+AXES_FAILURE_LIMIT = 5   # intentos fallidos antes de bloquear
+AXES_COOLOFF_TIME = 1    # horas de bloqueo
+
+# Bloquear por la combinación usuario+IP: bloquear solo por usuario dejaría
+# que un atacante bloquee cuentas ajenas a propósito (DoS), y solo por IP
+# castigaría a todos los que comparten una IP (NAT de universidad/oficina).
+AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
+
+AXES_RESET_ON_SUCCESS = True
+
+# Sin esto (default True), cada reintento durante el bloqueo reinicia la
+# hora de espera y el "espera una hora" de la página de bloqueo sería falso
+# para cualquier usuario que insista.
+AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
+
+# El form de login envía la credencial como 'username' (email o username),
+# pero axes por defecto la busca bajo el USERNAME_FIELD del modelo ('email')
+# y registraría None. Ver usuarios.backends.identificador_para_axes.
+AXES_USERNAME_CALLABLE = 'usuarios.backends.identificador_para_axes'
+
+# Detrás del proxy de Railway, REMOTE_ADDR es la IP del proxy: sin esto, axes
+# contaría los intentos de TODOS los visitantes contra la misma IP. Se
+# reutiliza el helper del contacto mediado (única fuente de verdad de la IP).
+AXES_CLIENT_IP_CALLABLE = 'usuarios.views._ip_del_request'
+
+AXES_LOCKOUT_TEMPLATE = 'usuarios/login_bloqueado.html'
 
 ROOT_URLCONF = 'meetandgig.urls'
 
