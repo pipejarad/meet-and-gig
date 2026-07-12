@@ -22,7 +22,10 @@
   La **eliminación de cuenta** (B3) es soft-delete con anonimización:
   `is_active=False`, email/username → `eliminado-<pk>…` (libera el email
   real para re-registro), nombre/teléfono/dirección/foto borrados y
-  portafolio despublicado. La fila nunca se borra (integridad referencial).
+  portafolio despublicado. La supresión llega hasta el **contenido** del
+  portafolio: biografía, formación, enlaces a las cuentas del músico y los
+  **archivos de multimedia** (que sobreviven a la despublicación) se borran,
+  no solo se ocultan. La fila nunca se borra (integridad referencial).
 
 ### `PerfilMusico`
 - **Para qué:** datos personales/privados del músico (teléfono, privacidad).

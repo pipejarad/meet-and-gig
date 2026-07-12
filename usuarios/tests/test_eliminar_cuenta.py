@@ -3,15 +3,32 @@ Hallazgo B3 (auditoría 11-06-2026): eliminación de cuenta (Ley 21.719).
 
 Soft-delete aceptable en v1, pero el dato personal debe quedar irreconocible:
 is_active=False + anonimización (email → placeholder único, nombre, teléfono,
-foto) y portafolio despublicado (activo=False).
+foto) y portafolio despublicado (activo=False). El derecho de supresión llega
+hasta el contenido del portafolio: biografía, formación, enlaces a las cuentas
+del músico y los archivos de multimedia (que sobreviven a la despublicación).
 """
-from django.contrib.auth import get_user_model
-from django.test import TestCase
-from django.urls import reverse
+import io
+import shutil
+import tempfile
 
-from usuarios.models import PerfilMusico, Portafolio
+from django.contrib.auth import get_user_model
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
+from django.urls import reverse
+from PIL import Image
+
+from usuarios.models import Multimedia, PerfilMusico, Portafolio
 
 Usuario = get_user_model()
+
+
+def _imagen_valida(nombre='multimedia.png'):
+    """PNG mínimo válido para poblar un ImageField en los tests."""
+    buffer = io.BytesIO()
+    Image.new('RGB', (10, 10), 'blue').save(buffer, format='PNG')
+    buffer.seek(0)
+    return SimpleUploadedFile(nombre, buffer.read(), content_type='image/png')
 
 PASSWORD = 'clave-segura-musico-7'
 
@@ -96,6 +113,48 @@ class EliminarCuentaTests(TestCase):
         self.client.post(self.url)
         respuesta = self.client.get(reverse('ver_portafolio', kwargs={'slug': slug}))
         self.assertEqual(respuesta.status_code, 404)
+
+    def test_post_borra_el_contenido_personal_del_portafolio(self):
+        # Biografía, formación y enlaces a las cuentas del músico son dato
+        # personal: despublicar no basta, hay que borrarlos (Ley 21.719).
+        self.portafolio.biografia = 'Soy Pedro, toco cueca en bares de Valparaíso.'
+        self.portafolio.formacion_musical = 'Conservatorio de la Universidad de Chile'
+        self.portafolio.instagram_url = 'https://instagram.com/pedroguitarra'
+        self.portafolio.youtube_url = 'https://youtube.com/@pedroguitarra'
+        self.portafolio.website_personal = 'https://pedroguitarra.cl'
+        self.portafolio.save()
+
+        self._login()
+        self.client.post(self.url)
+
+        self.portafolio.refresh_from_db()
+        self.assertEqual(self.portafolio.biografia, '')
+        self.assertEqual(self.portafolio.formacion_musical, '')
+        self.assertEqual(self.portafolio.instagram_url, '')
+        self.assertEqual(self.portafolio.youtube_url, '')
+        self.assertEqual(self.portafolio.website_personal, '')
+
+    def test_post_elimina_los_archivos_de_multimedia(self):
+        media_tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media_tmp, ignore_errors=True)
+        with override_settings(MEDIA_ROOT=media_tmp):
+            media = Multimedia.objects.create(
+                portafolio=self.portafolio,
+                tipo='imagen',
+                titulo='En vivo',
+                imagen=_imagen_valida(),
+            )
+            ruta = media.imagen.name
+            self.assertTrue(default_storage.exists(ruta))
+
+            self._login()
+            self.client.post(self.url)
+
+            # El registro se va y, con él, el archivo del almacenamiento.
+            self.assertFalse(
+                Multimedia.objects.filter(portafolio=self.portafolio).exists()
+            )
+            self.assertFalse(default_storage.exists(ruta))
 
     def test_el_email_queda_libre_para_un_registro_nuevo(self):
         # Derecho de supresión bien hecho: anonimizar libera el email para

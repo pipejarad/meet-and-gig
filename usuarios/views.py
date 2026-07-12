@@ -286,7 +286,32 @@ def eliminar_cuenta_view(request):
 
     usuario = request.user
     with transaction.atomic():
-        Portafolio.objects.filter(usuario=usuario).update(activo=False)
+        try:
+            portafolio = usuario.portafolio
+        except Portafolio.DoesNotExist:
+            portafolio = None
+        if portafolio is not None:
+            # Los archivos de multimedia (imágenes subidas) sobreviven a la
+            # despublicación: hay que borrarlos del almacenamiento, no solo
+            # ocultarlos, para que la supresión sea real (Ley 21.719).
+            for media in portafolio.multimedia.all():
+                if media.imagen:
+                    media.imagen.delete(save=False)
+            portafolio.multimedia.all().delete()
+
+            # Biografía, formación y enlaces a las cuentas del músico son dato
+            # personal: se anonimizan además de despublicar el portafolio.
+            portafolio.biografia = ''
+            portafolio.formacion_musical = ''
+            portafolio.website_personal = ''
+            portafolio.soundcloud_url = ''
+            portafolio.youtube_url = ''
+            portafolio.spotify_url = ''
+            portafolio.instagram_url = ''
+            portafolio.facebook_url = ''
+            portafolio.video_demo = ''
+            portafolio.activo = False
+            portafolio.save()
 
         try:
             perfil = usuario.perfil_musico
