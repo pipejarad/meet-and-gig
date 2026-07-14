@@ -18,7 +18,7 @@ django-debug-toolbar==4.2.0
 # autopep8/pycodestyle fijados en el rango que exige flake8 6
 # (pycodestyle >=2.10,<2.11; autopep8 2.3+ exigiría pycodestyle >=2.12)
 autopep8==2.0.4
-pycodestyle==2.10.0
+pycodestyle==2.14.0
 black==23.7.0
 flake8==6.0.0
 
